@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>First Love Church: Women’s Group Bulletin Board</title>
+  <title>First Love Church – Women’s Group Bulletin Board</title>
   <style>
     /* COLORS */
     :root {
@@ -16,10 +16,6 @@
       --button-bg: #b83b3b;
       --button-hover: #922a2a;
       --shadow: rgba(0,0,0,0.1);
-      --prayer-color: #fbc02d;
-      --provision-color: #d9c9b6;
-      --event-color: #e0a399;
-      --update-color: #045f5f;
     }
 
     /* RESET */
@@ -92,7 +88,7 @@
     }
 
     @media (max-width: 768px) {
-      .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 200px; padding: 1rem; }
+      .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 150px; padding: 1rem; }
       .nav-links.show { display: flex; }
       .hamburger { display: flex; }
     }
@@ -111,24 +107,7 @@
     }
     .controls button:hover { background: var(--button-hover); }
 
-    /* ADD POST BUTTON */
-    .button {
-      display: block;
-      background: var(--button-bg);
-      color: var(--bg-color);
-      padding: 1rem;
-      margin: 1.5rem auto;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      text-align: center;
-      text-decoration: none;
-      max-width: 300px;
-      box-shadow: 0 3px 6px var(--shadow);
-      transition: background 0.3s;
-    }
-    .button:hover, .button:focus { background: var(--button-hover); }
-
-    /* SECTIONS & CARDS */
+    /* SECTION */
     .section { margin: 2rem auto; width: 90%; max-width: 900px; }
     .section h2 {
       color: var(--secondary-color);
@@ -136,47 +115,60 @@
       padding-bottom: 0.3rem;
       margin-bottom: 1rem;
       font-size: 1.4rem;
+      text-align: center;
     }
-    .card-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1.2rem;
-    }
+
+    /* CARD STYLE */
     .card {
       background: var(--card-bg);
       border-radius: 12px;
       padding: 1rem;
       box-shadow: 0 3px 6px var(--shadow);
+      margin: 0 auto 1.5rem auto;
+      max-width: 700px;
       transition: transform 0.2s;
-      border-left: 6px solid transparent;
     }
-    .card:hover { transform: translateY(-3px); }
-    .card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
-    .card p { font-size: 1rem; line-height: 1.6; }
-    .card small { display: block; margin-top: 0.5rem; color: #555; font-style: italic; }
+    .card:hover { transform: translateY(-2px); }
 
-    /* CATEGORY COLORS */
-    .card.prayer { border-left-color: var(--prayer-color); }
-    .card.provision { border-left-color: var(--provision-color); }
-    .card.event { border-left-color: var(--event-color); }
-    .card.update { border-left-color: var(--update-color); }
+    /* POPUP BUTTON */
+    .popup-button {
+      background: var(--button-bg);
+      color: var(--bg-color);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .popup-button:hover { background: var(--button-hover); }
 
     /* DARK MODE */
     body.dark { background: #2b2b2b; color: #e9e2d0; }
     body.dark .card { background: #3a2f2f; }
-    body.dark .card small { color: #ccc; }
 
     /* LARGE TEXT */
     body.large-text { font-size: 1.25rem; }
 
     /* FOOTER */
     footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
+
+    /* FOCUS STYLES */
+    a:focus, button:focus { outline: 3px solid var(--primary-color); outline-offset: 2px; }
   </style>
+
+  <!-- Tally Popup Script -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
+
+  <!-- Supabase JS (ESM) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm"></script>
 </head>
 <body>
   <header>
     <div class="logo">
-      <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
+      <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener">
+        <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
+      </a>
     </div>
     <h1>Women’s Group Bulletin Board</h1>
   </header>
@@ -186,10 +178,6 @@
       <span></span><span></span><span></span>
     </div>
     <ul class="nav-links">
-      <li><a href="#prayers">Prayer Requests</a></li>
-      <li><a href="#provisions">Provisions Needed</a></li>
-      <li><a href="#events">Events</a></li>
-      <li><a href="#updates">Updates</a></li>
       <li><a href="members.html">Group Members</a></li>
     </ul>
   </nav>
@@ -199,78 +187,31 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <a href="https://tally.so/r/example" class="button" target="_blank">Add a Post</a>
-
-  <!-- SECTIONS WITH CATEGORY CARDS -->
-  <div class="section" id="prayers">
-    <h2>Prayer Requests</h2>
-    <div class="card-container">
-      <div class="card prayer">
-        <h3>Prayer Request</h3>
-        <p>Please pray for my neighbor’s surgery next week.</p>
-        <small>– Mary</small>
-      </div>
-      <div class="card prayer">
-        <h3>Prayer Request</h3>
-        <p>Guidance for my family in a hard time.</p>
-        <small>– Anonymous</small>
-      </div>
+  <!-- Bulletin Board Post Submission -->
+  <div class="section" id="submit-post">
+    <h2>Submit a Bulletin Board Post</h2>
+    <div class="card" style="text-align: center;">
+      <button 
+        data-tally-open="w7AQdP" 
+        data-tally-width="600" 
+        data-tally-iframe-height="600"
+        class="popup-button">
+        Submit a Bulletin Board Post
+      </button>
     </div>
   </div>
 
-  <div class="section" id="provisions">
-    <h2>Provisions Needed</h2>
-    <div class="card-container">
-      <div class="card provision">
-        <h3>Provision Needed</h3>
-        <p>Looking for canned goods for a family in need.</p>
-        <small>– Sarah</small>
-      </div>
-      <div class="card provision">
-        <h3>Provision Needed</h3>
-        <p>Volunteers needed to cook for next Sunday.</p>
-        <small>– Community Kitchen Team</small>
-      </div>
-    </div>
-  </div>
-
-  <div class="section" id="events">
-    <h2>Events</h2>
-    <div class="card-container">
-      <div class="card event">
-        <h3>Event</h3>
-        <p>Women’s Bible Study – Wednesday at 6pm.</p>
-        <small>– Group Leader</small>
-      </div>
-      <div class="card event">
-        <h3>Event</h3>
-        <p>Church picnic on September 5th.</p>
-        <small>– Events Team</small>
-      </div>
-    </div>
-  </div>
-
-  <div class="section" id="updates">
-    <h2>Updates</h2>
-    <div class="card-container">
-      <div class="card update">
-        <h3>Update</h3>
-        <p>Thank you for donations for the food drive!</p>
-        <small>– Outreach Committee</small>
-      </div>
-      <div class="card update">
-        <h3>Update</h3>
-        <p>Reminder: bring your own chairs for the picnic.</p>
-        <small>– Events Team</small>
-      </div>
-    </div>
+  <!-- Bulletin Board Posts -->
+  <div class="section" id="bulletin-board">
+    <h2>Bulletin Board</h2>
+    <div id="posts-container"></div>
   </div>
 
   <footer>
     &copy; First Love Church – Women’s Group
   </footer>
 
-  <script>
+  <script type="module">
     // Hamburger Menu
     const hamburger = document.querySelector(".hamburger");
     const navLinks = document.querySelector(".nav-links");
@@ -280,21 +221,54 @@
       navLinks.classList.toggle("show");
     });
 
-    // Restore Preferences
+    // Dark Mode & Large Text
     if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
     if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
 
-    // Dark Mode Toggle
     document.getElementById('toggle-dark').addEventListener('click', () => {
       document.body.classList.toggle('dark');
       localStorage.setItem('darkMode', document.body.classList.contains('dark'));
     });
 
-    // Large Text Toggle
     document.getElementById('toggle-text').addEventListener('click', () => {
       document.body.classList.toggle('large-text');
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
     });
+
+    // Supabase: Fetch and display submissions
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://btercxzikklbkjpltoey.supabase.co';
+    const supabaseKey = '<YOUR-ANON-API-KEY>'; // Replace with your anon/public key
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function loadPosts() {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const container = document.getElementById('posts-container');
+      container.innerHTML = '';
+
+      if (data && data.length > 0) {
+        data.forEach(post => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <h3>${post.category}</h3>
+            <p><strong>Submitted by:</strong> ${post.name || 'Anonymous'}</p>
+            <p>${post.details}</p>
+            ${post.event_date ? `<p><strong>Event Date:</strong> ${new Date(post.event_date).toLocaleDateString()}</p>` : ''}
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        container.innerHTML = '<p>No submissions yet.</p>';
+      }
+    }
+
+    loadPosts();
   </script>
 </body>
 </html>
