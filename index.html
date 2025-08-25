@@ -67,6 +67,7 @@
       color: white;
       text-decoration: none;
       font-weight: 600;
+      transition: color 0.3s;
     }
     .nav-links a:hover,
     .nav-links a:focus { text-decoration: underline; }
@@ -117,7 +118,7 @@
       font-size: 1.4rem;
       text-align: center;
     }
-
+    
     /* CARD STYLE */
     .card {
       background: var(--card-bg);
@@ -129,6 +130,21 @@
       transition: transform 0.2s;
     }
     .card:hover { transform: translateY(-2px); }
+    .card h3 {
+      text-transform: capitalize;
+      margin-bottom: 0.5rem;
+      color: var(--primary-color);
+    }
+    .card p {
+      margin-bottom: 0.5rem;
+    }
+    .card small {
+      display: block;
+      color: gray;
+      font-style: italic;
+      font-size: 0.9em;
+      margin-top: 0.5rem;
+    }
 
     /* POPUP BUTTON */
     .popup-button {
@@ -146,6 +162,8 @@
     /* DARK MODE */
     body.dark { background: #2b2b2b; color: #e9e2d0; }
     body.dark .card { background: #3a2f2f; }
+    body.dark .card h3 { color: var(--secondary-color); }
+    body.dark .card small { color: #aaa; }
 
     /* LARGE TEXT */
     body.large-text { font-size: 1.25rem; }
@@ -155,6 +173,71 @@
 
     /* FOCUS STYLES */
     a:focus, button:focus { outline: 3px solid var(--primary-color); outline-offset: 2px; }
+
+    /* NEW STYLES FOR LIKES AND COMMENTS */
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      padding-top: 0.5rem;
+    }
+    .post-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--secondary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .post-actions button:hover {
+      color: var(--primary-color);
+    }
+
+    .comment-section {
+      margin-top: 1rem;
+    }
+    .comment-input {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .comment-input input {
+      flex-grow: 1;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .comment-input button {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    .comment-input button:hover {
+      background: #c59f2a;
+    }
+    .comment-list {
+      margin-top: 1rem;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      padding-top: 0.5rem;
+    }
+    .comment-list p {
+      margin-bottom: 0.5rem;
+      padding-left: 1rem;
+      position: relative;
+    }
+    .comment-list p::before {
+      content: '»';
+      position: absolute;
+      left: 0;
+      color: var(--secondary-color);
+    }
   </style>
 
   <!-- Tally Popup Script -->
@@ -173,12 +256,17 @@
     <h1>Women’s Group Bulletin Board</h1>
   </header>
 
+  <!-- Updated Navigation -->
   <nav>
     <div class="hamburger" aria-label="Menu" aria-expanded="false" role="button" tabindex="0">
       <span></span><span></span><span></span>
     </div>
     <ul class="nav-links">
-      <li><a href="members.html">Group Members</a></li>
+      <li><a href="#prayers">Prayers</a></li>
+      <li><a href="#provisions">Provisions</a></li>
+      <li><a href="#events">Events</a></li>
+      <li><a href="#updates">Updates</a></li>
+      <li><a href="Members.html">Group Members</a></li>
     </ul>
   </nav>
 
@@ -201,11 +289,31 @@
     </div>
   </div>
 
-  <!-- Bulletin Board Posts -->
-  <div class="section" id="bulletin-board">
-    <h2>Bulletin Board</h2>
-    <div id="posts-container"></div>
-  </div>
+  <main>
+    <!-- Section for Prayer Requests -->
+    <div class="section" id="prayers">
+      <h2>Prayer Requests</h2>
+      <div id="prayers-container"></div>
+    </div>
+    
+    <!-- Section for Provisions -->
+    <div class="section" id="provisions">
+      <h2>Provisions Needed</h2>
+      <div id="provisions-container"></div>
+    </div>
+    
+    <!-- Section for Upcoming Events -->
+    <div class="section" id="events">
+      <h2>Upcoming Events</h2>
+      <div id="events-container"></div>
+    </div>
+    
+    <!-- Section for Updates -->
+    <div class="section" id="updates">
+      <h2>Updates</h2>
+      <div id="updates-container"></div>
+    </div>
+  </main>
 
   <footer>
     &copy; First Love Church – Women’s Group
@@ -234,41 +342,189 @@
       document.body.classList.toggle('large-text');
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
     });
-
+    
     // Supabase: Fetch and display submissions
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabaseUrl = 'https://btercxzikklbkjpltoey.supabase.co';
-    const supabaseKey = '<YOUR-ANON-API-KEY>'; // Replace with your anon/public key
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    async function loadPosts() {
-      const { data, error } = await supabase
-        .from('submissions')
+    // This function fetches all posts and their comments from the database and renders them
+    async function loadPostsAndComments() {
+      const { data: posts, error: postError } = await supabase
+        .from('Submissions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('Created_at', { ascending: false });
 
-      const container = document.getElementById('posts-container');
-      container.innerHTML = '';
+      if (postError) {
+        console.error('Error fetching posts:', postError);
+        return;
+      }
 
-      if (data && data.length > 0) {
-        data.forEach(post => {
+      // Fetch all comments and group them by post_id for efficient lookup
+      let comments = [];
+      try {
+        const { data, error } = await supabase
+          .from('Comments')
+          .select('*')
+          .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        comments = data;
+      } catch (commentError) {
+        console.error('Error fetching comments:', commentError);
+        console.error('This is likely because the "Comments" table does not exist yet. Please run the SQL commands provided to create it.');
+      }
+      
+      const commentsByPost = comments.reduce((acc, comment) => {
+        if (!acc[comment.post_id]) {
+          acc[comment.post_id] = [];
+        }
+        acc[comment.post_id].push(comment);
+        return acc;
+      }, {});
+      
+      // Clear all containers before re-populating
+      document.getElementById('prayers-container').innerHTML = '';
+      document.getElementById('provisions-container').innerHTML = '';
+      document.getElementById('events-container').innerHTML = '';
+      document.getElementById('updates-container').innerHTML = '';
+      
+      if (posts && posts.length > 0) {
+        posts.forEach(post => {
           const card = document.createElement('div');
           card.className = 'card';
-          card.innerHTML = `
+          
+          let cardContent = `
             <h3>${post.category}</h3>
-            <p><strong>Submitted by:</strong> ${post.name || 'Anonymous'}</p>
             <p>${post.details}</p>
-            ${post.event_date ? `<p><strong>Event Date:</strong> ${new Date(post.event_date).toLocaleDateString()}</p>` : ''}
+            <p><strong>Submitted by:</strong> ${post.name || 'Anonymous'}</p>
           `;
-          container.appendChild(card);
+
+          // Add event date if it exists
+          if (post.event_date) {
+            const formattedDate = new Date(post.event_date).toLocaleDateString('en-US', {
+              year: 'numeric', month: 'long', day: 'numeric'
+            });
+            cardContent += `<p><strong>Event Date:</strong> ${formattedDate}</p>`;
+          }
+
+          // Add actions section for likes and comments
+          cardContent += `
+            <div class="post-actions">
+              <button class="like-button" data-post-id="${post.id}">
+                ❤ ${post.likes || 0} Likes
+              </button>
+            </div>
+            <div class="comment-section">
+              <div class="comment-list" id="comments-for-${post.id}">
+              </div>
+              <form class="comment-input" data-post-id="${post.id}">
+                <input type="text" placeholder="Add a comment..." required>
+                <button type="submit">Post</button>
+              </form>
+            </div>
+          `;
+          
+          card.innerHTML = cardContent;
+
+          // Append card to the correct section based on category
+          switch(post.category) {
+            case 'Prayer Request':
+              document.getElementById('prayers-container').appendChild(card);
+              break;
+            case 'Provision Needed':
+              document.getElementById('provisions-container').appendChild(card);
+              break;
+            case 'Upcoming Event':
+              document.getElementById('events-container').appendChild(card);
+              break;
+            case 'General Update':
+              document.getElementById('updates-container').appendChild(card);
+              break;
+          }
+
+          // Render comments for this post
+          const postComments = commentsByPost[post.id] || [];
+          const commentList = document.getElementById(`comments-for-${post.id}`);
+          postComments.forEach(comment => {
+            const commentParagraph = document.createElement('p');
+            commentParagraph.textContent = comment.comment_text;
+            commentList.appendChild(commentParagraph);
+          });
         });
+
+        // Add event listeners for the new buttons and forms
+        document.querySelectorAll('.like-button').forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const postId = event.currentTarget.dataset.postId;
+            const { data, error } = await supabase.rpc('increment_likes', { post_id_in: postId });
+            if (error) console.error('Error liking post:', error);
+          });
+        });
+
+        document.querySelectorAll('.comment-input').forEach(form => {
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const postId = event.currentTarget.dataset.postId;
+            const commentText = event.currentTarget.querySelector('input').value;
+            const { data, error } = await supabase
+              .from('Comments')
+              .insert([
+                { post_id: postId, comment_text: commentText }
+              ]);
+
+            if (error) console.error('Error adding comment:', error);
+            event.currentTarget.reset(); // Clear the input field
+          });
+        });
+
       } else {
-        container.innerHTML = '<p>No submissions yet.</p>';
+        // Display a message if no posts are found
+        document.getElementById('prayers-container').innerHTML = '<p style="text-align: center;">No prayer requests yet.</p>';
+        document.getElementById('provisions-container').innerHTML = '<p style="text-align: center;">No provisions needed yet.</p>';
+        document.getElementById('events-container').innerHTML = '<p style="text-align: center;">No upcoming events yet.</p>';
+        document.getElementById('updates-container').innerHTML = '<p style="text-align: center;">No updates yet.</p>';
       }
     }
 
-    loadPosts();
+    // Set up real-time listeners for changes to posts and comments
+    supabase.channel('public:Submissions').on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'Submissions'
+      }, (payload) => {
+        loadPostsAndComments();
+    }).subscribe();
+
+    supabase.channel('public:Comments').on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'Comments'
+      }, (payload) => {
+        loadPostsAndComments();
+    }).subscribe();
+
+    // The initial call to load the posts when the page loads
+    loadPostsAndComments();
+
+    // Smooth scroll for navigation links
+    document.querySelectorAll('.nav-links a').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const targetId = this.getAttribute('href');
+        if (targetId.startsWith('#')) {
+          e.preventDefault();
+          const targetElement = document.querySelector(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - document.querySelector('header').offsetHeight - document.querySelector('nav').offsetHeight,
+              behavior: 'smooth'
+            });
+          }
+        }
+      });
+    });
   </script>
 </body>
 </html>
