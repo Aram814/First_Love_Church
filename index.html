@@ -173,6 +173,9 @@
     /* FOOTER */
     footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
   </style>
+
+  <!-- Tally Embed Script -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
   <header>
@@ -200,8 +203,13 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <!-- Add a Post Button -->
-  <button id="add-post" class="button">Add a Post</button>
+  <!-- Add a Post Button with Tally popup -->
+  <button class="button" 
+          data-tally-open="w7AQdP" 
+          data-tally-layout="modal" 
+          data-tally-hide-title="1">
+    Add a Post
+  </button>
 
   <!-- SECTIONS -->
   <div class="section" id="prayer">
@@ -229,7 +237,6 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://tally.so/widgets/embed.js"></script>
 
   <script>
     // Hamburger Menu
@@ -255,11 +262,6 @@
     document.getElementById('toggle-text').addEventListener('click', () => {
       document.body.classList.toggle('large-text');
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
-
-    // --- Tally Popup ---
-    document.getElementById('add-post').addEventListener('click', () => {
-      Tally.openPopup('https://tally.so/r/w7AQdP');
     });
 
     // --- Supabase Integration ---
