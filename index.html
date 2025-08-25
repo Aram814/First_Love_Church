@@ -245,7 +245,7 @@
     
     <!-- Section for Updates -->
     <div class="section" id="updates">
-      <h2>Updates</h2>
+      <h2>Other Updates</h2>
       <div id="updates-container"></div>
     </div>
   </main>
@@ -305,6 +305,9 @@
       
       if (posts && posts.length > 0) {
         posts.forEach(post => {
+          // Log the exact category from the database for debugging
+          console.log(`Supabase Category: "${post.Category}"`);
+
           const card = document.createElement('div');
           card.className = 'card';
           
@@ -324,8 +327,9 @@
           
           card.innerHTML = cardContent;
 
-          // Append card to the correct section based on category
-          switch(post.Category) {
+          // Append card to the correct section based on category, handling case and whitespace
+          const category = post.Category ? post.Category.trim() : '';
+          switch(category) {
             case 'Prayer Request':
               document.getElementById('prayers-container').appendChild(card);
               break;
