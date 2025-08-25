@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Women's Group Members – First Love Church</title>
+  <style>
+    /* COLORS */
+    :root {
+      --bg-color: #f5f2ed;
+      --card-bg: #e9e2d0;
+      --text-color: #2b2b2b;
+      --primary-color: #caa72d;
+      --secondary-color: #b83b3b;
+      --footer-color: #045f5f;
+      --button-bg: #b83b3b;
+      --button-hover: #922a2a;
+      --shadow: rgba(0,0,0,0.1);
+    }
+
+    /* RESET */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      font-size: 1rem;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--bg-color);
+      border-bottom: 2px solid var(--primary-color);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    header .logo img { max-height: 60px; }
+    header h1 {
+      font-size: 1.6rem;
+      color: var(--secondary-color);
+      margin-left: 1rem;
+    }
+
+    /* NAVIGATION */
+    nav {
+      background: var(--primary-color);
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0;
+      position: sticky;
+      top: 70px;
+      z-index: 999;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .nav-links a:hover,
+    .nav-links a:focus { text-decoration: underline; }
+
+    /* HAMBURGER */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      position: absolute;
+      right: 1rem;
+    }
+    .hamburger span {
+      height: 3px;
+      width: 25px;
+      background: white;
+      margin: 4px 0;
+      border-radius: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 150px; padding: 1rem; }
+      .nav-links.show { display: flex; }
+      .hamburger { display: flex; }
+    }
+
+    /* ACCESSIBILITY CONTROLS */
+    .controls { text-align: center; margin: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+    .controls button {
+      background: var(--button-bg);
+      color: var(--bg-color);
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .controls button:hover { background: var(--button-hover); }
+
+    /* SECTION */
+    .section { margin: 2rem auto; width: 90%; max-width: 900px; }
+    .section h2 {
+      color: var(--secondary-color);
+      border-bottom: 2px solid var(--secondary-color);
+      padding-bottom: 0.3rem;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    /* CARD FOR TALLY FORM */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 3px 6px var(--shadow);
+      margin: 0 auto;
+      max-width: 700px;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); }
+
+    .card iframe {
+      width: 100%;
+      min-height: 600px;
+      border: none;
+      border-radius: 8px;
+    }
+
+    /* DARK MODE */
+    body.dark { background: #2b2b2b; color: #e9e2d0; }
+    body.dark .card { background: #3a2f2f; }
+
+    /* LARGE TEXT */
+    body.large-text { font-size: 1.25rem; }
+
+    /* FOOTER */
+    footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
+
+    /* FOCUS STYLES */
+    a:focus, button:focus { outline: 3px solid var(--primary-color); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <header>
+  <div class="logo">
+    <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener">
+      <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
+    </a>
+  </div>
+  <h1>Women's Group Members</h1>
+</header>
+
+
+  <nav>
+    <div class="hamburger" aria-label="Menu" aria-expanded="false" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+    </ul>
+  </nav>
+
+  <div class="controls">
+    <button id="toggle-dark">Toggle Dark Mode</button>
+    <button id="toggle-text">Toggle Larger Text</button>
+  </div>
+
+  <div class="section">
+    <h2>Submit Your Contact Info</h2>
+    <div class="card">
+      <iframe src="https://tally.so/embed/your-form-id" title="Group Members Form"></iframe>
+    </div>
+  </div>
+
+  <footer>
+    &copy; First Love Church – Women’s Group
+  </footer>
+
+  <script>
+    // Hamburger Menu
+    const hamburger = document.querySelector(".hamburger");
+    const navLinks = document.querySelector(".nav-links");
+    hamburger.addEventListener("click", () => {
+      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
+      hamburger.setAttribute("aria-expanded", !expanded);
+      navLinks.classList.toggle("show");
+    });
+
+    // Restore Preferences
+    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+
+    // Dark Mode Toggle
+    document.getElementById('toggle-dark').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    });
+
+    // Large Text Toggle
+    document.getElementById('toggle-text').addEventListener('click', () => {
+      document.body.classList.toggle('large-text');
+      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+    });
+  </script>
+</body>
+</html>
