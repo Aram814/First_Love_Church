@@ -121,7 +121,8 @@
       border-radius: 6px;
       font-size: 1.2rem;
       text-align: center;
-      text-decoration: none;
+      border: none;
+      cursor: pointer;
       max-width: 300px;
       box-shadow: 0 3px 6px var(--shadow);
       transition: background 0.3s;
@@ -199,7 +200,8 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <a href="https://tally.so/r/example" class="button" target="_blank">Add a Post</a>
+  <!-- Add a Post Button -->
+  <button id="add-post" class="button">Add a Post</button>
 
   <!-- SECTIONS -->
   <div class="section" id="prayer">
@@ -227,6 +229,8 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://tally.so/widgets/embed.js"></script>
+
   <script>
     // Hamburger Menu
     const hamburger = document.querySelector(".hamburger");
@@ -251,6 +255,11 @@
     document.getElementById('toggle-text').addEventListener('click', () => {
       document.body.classList.toggle('large-text');
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+    });
+
+    // --- Tally Popup ---
+    document.getElementById('add-post').addEventListener('click', () => {
+      Tally.openPopup('https://tally.so/r/w7AQdP');
     });
 
     // --- Supabase Integration ---
@@ -285,7 +294,7 @@
       if (post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
 
       card.innerHTML = html;
-      container.prepend(card); // newest posts on top
+      container.prepend(card);
     }
 
     // Initial load
