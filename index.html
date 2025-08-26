@@ -154,9 +154,11 @@
     });
 
     // Supabase setup
+    import { createClient } from '@supabase/supabase-js'; // Assuming you are using a module system like ES Modules
+
     const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const categoryMap = { "Prayer":"prayer", "Provision":"provision", "Event":"event", "Other Update":"update" };
 
