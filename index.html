@@ -125,6 +125,8 @@
       max-width: 300px;
       box-shadow: 0 3px 6px var(--shadow);
       transition: background 0.3s;
+      cursor: pointer;
+      border: none;
     }
     .button:hover, .button:focus { background: var(--button-hover); }
 
@@ -175,6 +177,8 @@
 
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tally JS -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
   <header>
@@ -202,7 +206,15 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <a href="https://tally.so/r/example" class="button" target="_blank">Add a Post</a>
+  <!-- Updated button to open Tally modal -->
+  <button class="button"
+          data-tally-open="w7AQdP"
+          data-tally-layout="modal"
+          data-tally-hide-title="1"
+          data-tally-auto-close="3000"
+          data-tally-form-events-forwarding="1">
+    Add a Post
+  </button>
 
   <!-- SECTIONS WITH CATEGORY CARDS -->
   <div class="section" id="prayers">
