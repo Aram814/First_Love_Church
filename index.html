@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>First Love Church: Women’s Group Bulletin Board</title>
 
-  <!-- Tally Embed -->
+  <!-- Tally Embed Script -->
   <script async src="https://tally.so/widgets/embed.js"></script>
 
   <style>
@@ -59,7 +59,7 @@
       justify-content: center;
       padding: 0.5rem 0;
       position: sticky;
-      top: 80px; /* under header */
+      top: 70px;
       z-index: 999;
     }
     .nav-links {
@@ -67,8 +67,13 @@
       gap: 2rem;
       list-style: none;
     }
-    .nav-links a { color: white; text-decoration: none; font-weight: 600; }
-    .nav-links a:hover, .nav-links a:focus { text-decoration: underline; }
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .nav-links a:hover,
+    .nav-links a:focus { text-decoration: underline; }
 
     /* HAMBURGER */
     .hamburger { display: none; flex-direction: column; cursor: pointer; position: absolute; right: 1rem; }
@@ -79,7 +84,7 @@
       .hamburger { display: flex; }
     }
 
-    /* CONTROLS */
+    /* ACCESSIBILITY CONTROLS */
     .controls { text-align: center; margin: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
     .controls button {
       background: var(--button-bg);
@@ -107,6 +112,7 @@
       max-width: 300px;
       box-shadow: 0 3px 6px var(--shadow);
       transition: background 0.3s;
+      cursor: pointer;
     }
     .button:hover, .button:focus { background: var(--button-hover); }
 
@@ -159,7 +165,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
   <header>
     <div class="logo">
       <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
@@ -185,25 +190,62 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <!-- Tally Button -->
-  <button class="button"
-    data-tally-open="w7AQdP"
-    data-tally-layout="modal"
-    data-tally-hide-title="1"
-    data-tally-auto-close="3000"
-    data-tally-form-events-forwarding="1">
+  <!-- Add Post Button -->
+  <button class="button" 
+          data-tally-open="w7AQdP" 
+          data-tally-layout="modal" 
+          data-tally-hide-title="1" 
+          data-tally-auto-close="3000" 
+          data-tally-form-events-forwarding="1">
     Add a Post
   </button>
 
   <!-- SECTIONS -->
-  <div class="section" id="prayers"><h2>Prayer Requests</h2><div class="card-container"></div></div>
-  <div class="section" id="provisions"><h2>Provisions Needed</h2><div class="card-container"></div></div>
-  <div class="section" id="events"><h2>Events</h2><div class="card-container"></div></div>
-  <div class="section" id="updates"><h2>Updates</h2><div class="card-container"></div></div>
+  <div class="section" id="prayers">
+    <h2>Prayer Requests</h2>
+    <div class="card-container"></div>
+  </div>
+  <div class="section" id="provisions">
+    <h2>Provisions Needed</h2>
+    <div class="card-container"></div>
+  </div>
+  <div class="section" id="events">
+    <h2>Events</h2>
+    <div class="card-container"></div>
+  </div>
+  <div class="section" id="updates">
+    <h2>Updates</h2>
+    <div class="card-container"></div>
+  </div>
 
   <footer>&copy; First Love Church – Women’s Group</footer>
 
   <script>
+    // Hamburger Menu
+    const hamburger = document.querySelector(".hamburger");
+    const navLinks = document.querySelector(".nav-links");
+    hamburger.addEventListener("click", () => {
+      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
+      hamburger.setAttribute("aria-expanded", !expanded);
+      navLinks.classList.toggle("show");
+    });
+
+    // Restore Preferences
+    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+
+    // Dark Mode Toggle
+    document.getElementById('toggle-dark').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    });
+
+    // Large Text Toggle
+    document.getElementById('toggle-text').addEventListener('click', () => {
+      document.body.classList.toggle('large-text');
+      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+    });
+
     // --- Supabase Setup ---
     const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
@@ -221,24 +263,21 @@
       card.className = `card ${sectionId}`;
       let html = `<h3>${post['Title/Subject']}</h3>`;
       html += `<p>${post['Details/Description']}</p>`;
-      if(post['Event Date'] && sectionId==='events') 
-        html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
+      if(post['Event Date'] && sectionId==='events') html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
       if(post['Name (Optional)']) html += `<small>– ${post['Name (Optional)']}</small>`;
       if(post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
       card.innerHTML = html;
       container.prepend(card);
     }
 
-    // Load existing posts
     async function loadPosts() {
-      const { data: posts, error } = await supabase
-        .from('Submissions')
-        .select('*')
-        .order('Created_at', { ascending: false });
-
-      if(error){ console.error("Error fetching posts:", error); return; }
-      posts.forEach(post => renderPost(post));
+      const { data: posts, error } = await supabase.from('Submissions').select('*').order('Created_at', { ascending: false });
+      if (error) console.error(error);
+      else posts.forEach(post => renderPost(post));
     }
+
+    // Load posts initially
+    loadPosts();
 
     // Real-time updates
     supabase.channel('public:Submissions')
@@ -246,31 +285,6 @@
         renderPost(payload.new);
       })
       .subscribe();
-
-    loadPosts();
-
-    // Hamburger menu
-    const hamburger = document.querySelector(".hamburger");
-    const navLinks = document.querySelector(".nav-links");
-    hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navLinks.classList.toggle("show");
-    });
-
-    // Dark/large text toggles
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
-
-    document.getElementById('toggle-dark').addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-    });
-
-    document.getElementById('toggle-text').addEventListener('click', () => {
-      document.body.classList.toggle('large-text');
-      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
   </script>
 </body>
 </html>
