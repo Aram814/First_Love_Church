@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>First Love Church: Women’s Group Bulletin Board</title>
-
-  <!-- COLORS & RESET -->
   <style>
+    /* COLORS & RESET */
     :root {
       --bg-color: #f5f2ed;
       --card-bg: #e9e2d0;
@@ -33,6 +32,7 @@
     .nav-links { display:flex; gap:2rem; list-style:none; }
     .nav-links a { color:white; text-decoration:none; font-weight:600; }
     .nav-links a:hover, .nav-links a:focus { text-decoration:underline; }
+
     .hamburger { display:none; flex-direction:column; cursor:pointer; position:absolute; right:1rem; }
     .hamburger span { height:3px; width:25px; background:white; margin:4px 0; border-radius:2px; }
     @media (max-width:768px) { 
@@ -132,7 +132,28 @@
   <footer>&copy; First Love Church – Women’s Group</footer>
 
   <script>
-    // 1️⃣ Initialize Supabase first
+    // Hamburger
+    const hamburger = document.querySelector(".hamburger");
+    const navLinks = document.querySelector(".nav-links");
+    hamburger.addEventListener("click", () => {
+      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
+      hamburger.setAttribute("aria-expanded", !expanded);
+      navLinks.classList.toggle("show");
+    });
+
+    // Preferences
+    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+    document.getElementById('toggle-dark').addEventListener('click', ()=>{
+      document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    });
+    document.getElementById('toggle-text').addEventListener('click', ()=>{
+      document.body.classList.toggle('large-text');
+      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+    });
+
+    // Supabase setup
     const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -156,52 +177,26 @@
       container.prepend(card);
     }
 
-    // Load existing posts
+    // Polling function
     async function loadPosts(){
-      console.log("Fetching rows from Supabase (Submissions)...");
-      const { data: posts, error } = await supabase
-        .from('Submissions')
-        .select('*')
-        .order('Created_at', { ascending:false });
-      if(error){ console.error("Error fetching posts from Supabase:", error); return; }
-      console.log("Fetched posts:", posts);
-      posts.forEach(post => renderPost(post));
+      try {
+        const { data: posts, error } = await supabase
+          .from('Submissions')
+          .select('*')
+          .order('Created_at', { ascending:false });
+        if(error){ console.error("Error fetching posts:", error); return; }
+        document.querySelectorAll('.card-container').forEach(c => c.innerHTML = ''); // clear before re-render
+        posts.forEach(post => renderPost(post));
+      } catch(e) {
+        console.error("Exception loading posts:", e);
+      }
     }
 
-    // Realtime subscription
-    supabase
-      .channel('public:Submissions')
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'Submissions' }, payload => {
-        console.log("New post inserted:", payload.new);
-        renderPost(payload.new);
-      })
-      .subscribe();
+    // Initial load
+    loadPosts();
+    // Poll every 5 seconds
+    setInterval(loadPosts, 5000);
 
-    // Hamburger
-    const hamburger = document.querySelector(".hamburger");
-    const navLinks = document.querySelector(".nav-links");
-    hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navLinks.classList.toggle("show");
-    });
-
-    // Preferences
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
-    document.getElementById('toggle-dark').addEventListener('click', ()=>{
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-    });
-    document.getElementById('toggle-text').addEventListener('click', ()=>{
-      document.body.classList.toggle('large-text');
-      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
-
-    // Load posts after DOM is ready
-    window.addEventListener('DOMContentLoaded', () => {
-      loadPosts();
-    });
   </script>
 </body>
 </html>
