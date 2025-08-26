@@ -153,9 +153,9 @@
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
     });
 
-    // Supabase setup
+    // --- Supabase setup ---
     const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     const categoryMap = { "Prayer":"prayer", "Provision":"provision", "Event":"event", "Other Update":"update" };
@@ -177,26 +177,18 @@
       container.prepend(card);
     }
 
-    // Polling function
     async function loadPosts(){
-      try {
-        const { data: posts, error } = await supabase
-          .from('Submissions')
-          .select('*')
-          .order('Created_at', { ascending:false });
-        if(error){ console.error("Error fetching posts:", error); return; }
-        document.querySelectorAll('.card-container').forEach(c => c.innerHTML = ''); // clear before re-render
-        posts.forEach(post => renderPost(post));
-      } catch(e) {
-        console.error("Exception loading posts:", e);
-      }
+      const { data: posts, error } = await supabase
+        .from('Submissions')
+        .select('*')
+        .order('Created_at', { ascending:false });
+      if(error){ console.error("Error fetching posts:", error); return; }
+      posts.forEach(post => renderPost(post));
     }
 
-    // Initial load
+    // Poll every 5 seconds for live updates
     loadPosts();
-    // Poll every 5 seconds
     setInterval(loadPosts, 5000);
-
   </script>
 </body>
 </html>
