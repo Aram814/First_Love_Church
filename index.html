@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>First Love Church: Women’s Group Bulletin Board</title>
+
   <style>
-    /* COLORS & RESET */
+    /* (kept your visual styles) */
     :root {
       --bg-color: #f5f2ed;
       --card-bg: #e9e2d0;
@@ -50,7 +51,7 @@
 
     .section { margin:2rem auto; width:90%; max-width:900px; }
     .section h2 { color:var(--secondary-color); border-bottom:2px solid var(--secondary-color); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.4rem; }
-    .card-container { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1.2rem; }
+    .card-container { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1.2rem; min-height: 40px; }
     .card { background:var(--card-bg); border-radius:12px; padding:1rem; box-shadow:0 3px 6px var(--shadow); transition: transform 0.2s; border-left:6px solid transparent; }
     .card:hover { transform:translateY(-3px); }
     .card h3 { font-size:1.15rem; margin-bottom:0.5rem; }
@@ -69,9 +70,9 @@
     footer { background:var(--footer-color); color:var(--primary-color); text-align:center; padding:1rem; margin-top:2rem; }
   </style>
 
-  <!-- Tally Embed Script -->
+  <!-- Tally: put widget script in head per Tally instructions -->
   <script async src="https://tally.so/widgets/embed.js"></script>
-  <!-- Supabase JS -->
+  <!-- Supabase client (v2) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -100,110 +101,201 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <!-- Add a Post Button with Tally popup -->
-  <button class="button" 
-          data-tally-open="w7AQdP" 
-          data-tally-layout="modal" 
+  <!-- Add a Post Button (Tally popup via data attributes - official method) -->
+  <button class="button"
+          data-tally-open="w7AQdP"
+          data-tally-layout="modal"
           data-tally-hide-title="1">
     Add a Post
   </button>
 
-  <!-- SECTIONS -->
+  <!-- sections -->
   <div class="section" id="prayer">
     <h2>Prayer Request</h2>
-    <div class="card-container"></div>
+    <div class="card-container" aria-live="polite"></div>
   </div>
 
   <div class="section" id="provision">
     <h2>Provision Needed</h2>
-    <div class="card-container"></div>
+    <div class="card-container" aria-live="polite"></div>
   </div>
 
   <div class="section" id="event">
     <h2>Event</h2>
-    <div class="card-container"></div>
+    <div class="card-container" aria-live="polite"></div>
   </div>
 
   <div class="section" id="update">
     <h2>Other Update</h2>
-    <div class="card-container"></div>
+    <div class="card-container" aria-live="polite"></div>
   </div>
 
   <footer>&copy; First Love Church – Women’s Group</footer>
 
   <script>
-    // Hamburger
-    const hamburger = document.querySelector(".hamburger");
-    const navLinks = document.querySelector(".nav-links");
-    hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navLinks.classList.toggle("show");
-    });
+  // small UI helpers
+  const hamburger = document.querySelector(".hamburger");
+  const navLinks = document.querySelector(".nav-links");
+  hamburger.addEventListener("click", () => {
+    const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
+    hamburger.setAttribute("aria-expanded", !expanded);
+    navLinks.classList.toggle("show");
+  });
 
-    // Preferences
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
-    document.getElementById('toggle-dark').addEventListener('click', ()=>{
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-    });
-    document.getElementById('toggle-text').addEventListener('click', ()=>{
-      document.body.classList.toggle('large-text');
-      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
+  if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+  if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+  document.getElementById('toggle-dark').addEventListener('click', ()=>{
+    document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  });
+  document.getElementById('toggle-text').addEventListener('click', ()=>{
+    document.body.classList.toggle('large-text');
+    localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+  });
 
-    // Supabase logic after page load
-    window.onload = async function() {
+  // --- Supabase + rendering logic ---
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // use the exact credentials you provided
+      const SUPABASE_URL = "https://btercxzikklbkjpltoey.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
 
-      const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
-      const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+      // IMPORTANT: do not shadow global 'supabase' — create a distinct client variable
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      const categoryMap = { "Prayer":"prayer", "Provision":"provision", "Event":"event", "Other Update":"update" };
+      // tolerant category mapping (case-insensitive)
+      const categoryMap = {
+        "prayer": "prayer",
+        "provision": "provision",
+        "event": "event",
+        "other update": "update",
+        "other": "update"
+      };
 
-      function renderPost(post){
-        const sectionId = categoryMap[post.Category];
-        if(!sectionId) return;
+      // helper: get first non-empty field from a set of candidate keys
+      function getField(obj, keys) {
+        for (const k of keys) {
+          if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== "") return obj[k];
+        }
+        return null;
+      }
+
+      function formatDate(d) {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return String(d);
+        return dt.toLocaleDateString();
+      }
+
+      function renderPost(post) {
+        // locate section id from category (be forgiving)
+        const rawCategory = String(post['Category'] || post.Category || "").trim();
+        const key = rawCategory.toLowerCase();
+        const sectionId = categoryMap[key] || 'update'; // fallback to update
+
         const container = document.querySelector(`#${sectionId} .card-container`);
-        if(!container) return;
+        if (!container) return;
 
-        const card = document.createElement('div');
+        const card = document.createElement('article');
         card.className = `card ${sectionId}`;
-        let html = `<h3>${post['Title/Subject']}</h3>`;
-        html += `<p>${post['Details/Description']}</p>`;
-        if(post['Event Date'] && sectionId==='event') html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
-        if(post['Name (Optional)']) html += `<small>– ${post['Name (Optional)']}</small>`;
-        if(post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
+
+        const title = getField(post, ['Title/Subject','Title','title','title_subject']) || "No subject";
+        const details = getField(post, ['Details/Description','Details','details','details_description']) || "";
+        const name = getField(post, ['Name (Optional)','Name','name']) || "";
+        const contact = getField(post, ['Contact Info (Optional)','Contact Info','contact','contact_info']) || "";
+        const eventDateRaw = getField(post, ['Event Date','Event_Date','event_date','event date']);
+        const createdRaw = getField(post, ['Created_at','created_at','createdAt','created at']);
+
+        let html = `<h3>${escapeHtml(String(title))}</h3>`;
+        if (details) html += `<p>${escapeHtml(String(details))}</p>`;
+        if (eventDateRaw) html += `<p><small><strong>Event:</strong> ${escapeHtml(formatDate(eventDateRaw))}</small></p>`;
+        if (name) html += `<p><small>– ${escapeHtml(String(name))}</small></p>`;
+        if (contact) html += `<p><small>Contact: ${escapeHtml(String(contact))}</small></p>`;
+        if (createdRaw) html += `<small>Posted: ${escapeHtml(formatDate(createdRaw))}</small>`;
+
         card.innerHTML = html;
+        // newest on top
         container.prepend(card);
       }
 
-      // Load existing posts
-      async function loadPosts(){
-        const { data: posts, error } = await supabase
+      // escape basic HTML to avoid accidental HTML injection in posts
+      function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, function(m) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+      }
+
+      // load posts (no reliance on exact created_at column name — sort client-side)
+      async function loadPosts() {
+        console.log("Fetching rows from Supabase (Submissions)...");
+        const { data, error } = await supabaseClient
           .from('Submissions')
-          .select('*')
-          .order('Created_at', { ascending:false });
-        if(error){ console.error("Error fetching posts:", error); return; }
-        console.log("Fetched posts:", posts);
-        posts.forEach(post => renderPost(post));
+          .select('*');
+
+        if (error) {
+          console.error("Error fetching posts from Supabase:", error);
+          return;
+        }
+        console.log("Fetched posts:", data);
+
+        // clear containers
+        ['prayer','provision','event','update'].forEach(id => {
+          const container = document.querySelector(`#${id} .card-container`);
+          if (container) container.innerHTML = "";
+        });
+
+        // client-side sort: use any timestamp-like field found
+        data.sort((a, b) => {
+          const aDate = parsePossibleDate(a);
+          const bDate = parsePossibleDate(b);
+          return bDate - aDate; // newest first
+        });
+
+        data.forEach(row => renderPost(row));
       }
 
-      // Realtime subscription
+      // attempt to parse created / Created_at / created_at etc.
+      function parsePossibleDate(row) {
+        const candidates = ['Created_at','created_at','createdAt','created at','Created At'];
+        for (const k of candidates) {
+          if (row[k]) {
+            const d = new Date(row[k]);
+            if (!isNaN(d)) return d.getTime();
+          }
+        }
+        // fallback: try event date
+        const ev = row['Event Date'] || row['event_date'] || row['Event_Date'];
+        if (ev) {
+          const d = new Date(ev);
+          if (!isNaN(d)) return d.getTime();
+        }
+        return 0;
+      }
+
+      // realtime subscription for INSERTs
       async function setupRealtime() {
-        const channel = supabase
-          .channel('public:Submissions')
-          .on('postgres_changes', { event:'INSERT', schema:'public', table:'Submissions' }, payload => {
-            console.log("New post inserted:", payload.new);
-            renderPost(payload.new);
-          });
-        await channel.subscribe();
+        try {
+          const channel = supabaseClient
+            .channel('public:Submissions')
+            .on('postgres_changes', { event:'INSERT', schema:'public', table:'Submissions' }, (payload) => {
+              console.log("Realtime new row:", payload.new);
+              renderPost(payload.new);
+            });
+          await channel.subscribe();
+          console.log("Subscribed to realtime on Submissions");
+        } catch (err) {
+          console.warn("Realtime subscription error:", err);
+        }
       }
 
-      loadPosts();
-      setupRealtime();
-    };
+      // initial load + realtime
+      await loadPosts();
+      await setupRealtime();
+
+    } catch (err) {
+      console.error("Initialization error:", err);
+    }
+  }); // DOMContentLoaded
   </script>
 </body>
 </html>
