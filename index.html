@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>First Love Church: Women’s Group Bulletin Board</title>
-
-  <!-- Tally Embed Script -->
-  <script async src="https://tally.so/widgets/embed.js"></script>
-
   <style>
     /* COLORS */
     :root {
@@ -50,7 +46,11 @@
       z-index: 1000;
     }
     header .logo img { max-height: 60px; }
-    header h1 { font-size: 1.6rem; color: var(--secondary-color); margin-left: 1rem; }
+    header h1 {
+      font-size: 1.6rem;
+      color: var(--secondary-color);
+      margin-left: 1rem;
+    }
 
     /* NAVIGATION */
     nav {
@@ -76,8 +76,21 @@
     .nav-links a:focus { text-decoration: underline; }
 
     /* HAMBURGER */
-    .hamburger { display: none; flex-direction: column; cursor: pointer; position: absolute; right: 1rem; }
-    .hamburger span { height: 3px; width: 25px; background: white; margin: 4px 0; border-radius: 2px; }
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+      position: absolute;
+      right: 1rem;
+    }
+    .hamburger span {
+      height: 3px;
+      width: 25px;
+      background: white;
+      margin: 4px 0;
+      border-radius: 2px;
+    }
+
     @media (max-width: 768px) {
       .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 200px; padding: 1rem; }
       .nav-links.show { display: flex; }
@@ -112,7 +125,6 @@
       max-width: 300px;
       box-shadow: 0 3px 6px var(--shadow);
       transition: background 0.3s;
-      cursor: pointer;
     }
     .button:hover, .button:focus { background: var(--button-hover); }
 
@@ -161,8 +173,8 @@
     footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
   </style>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Tally Popup -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
   <header>
@@ -190,7 +202,7 @@
     <button id="toggle-text">Toggle Larger Text</button>
   </div>
 
-  <!-- Add Post Button -->
+  <!-- Tally Button -->
   <button class="button" 
           data-tally-open="w7AQdP" 
           data-tally-layout="modal" 
@@ -200,25 +212,30 @@
     Add a Post
   </button>
 
-  <!-- SECTIONS -->
+  <!-- SECTIONS WITH CATEGORY CARDS -->
   <div class="section" id="prayers">
     <h2>Prayer Requests</h2>
     <div class="card-container"></div>
   </div>
+
   <div class="section" id="provisions">
     <h2>Provisions Needed</h2>
     <div class="card-container"></div>
   </div>
+
   <div class="section" id="events">
     <h2>Events</h2>
     <div class="card-container"></div>
   </div>
+
   <div class="section" id="updates">
     <h2>Updates</h2>
     <div class="card-container"></div>
   </div>
 
-  <footer>&copy; First Love Church – Women’s Group</footer>
+  <footer>
+    &copy; First Love Church – Women’s Group
+  </footer>
 
   <script>
     // Hamburger Menu
@@ -246,45 +263,48 @@
       localStorage.setItem('largeText', document.body.classList.contains('large-text'));
     });
 
-    // --- Supabase Setup ---
-    const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // Category mapping
+    const categoryMap = {
+      "Prayer": "prayers",
+      "Provision": "provisions",
+      "Event": "events",
+      "Other Update": "updates"
+    };
 
-    const categoryMap = { "Prayer":"prayers", "Provision":"provisions", "Event":"events", "Other Update":"updates" };
-
+    // Render posts from JSON
     function renderPost(post) {
-      const sectionId = categoryMap[post.Category];
+      const sectionId = categoryMap[post.category];
       if (!sectionId) return;
       const container = document.querySelector(`#${sectionId} .card-container`);
       if (!container) return;
 
       const card = document.createElement('div');
       card.className = `card ${sectionId}`;
-      let html = `<h3>${post['Title/Subject']}</h3>`;
-      html += `<p>${post['Details/Description']}</p>`;
-      if(post['Event Date'] && sectionId==='events') html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
-      if(post['Name (Optional)']) html += `<small>– ${post['Name (Optional)']}</small>`;
-      if(post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
+      let html = `<h3>${post.title}</h3>`;
+      html += `<p>${post.details}</p>`;
+      if(post.date && sectionId === 'events') html += `<small>Date: ${new Date(post.date).toLocaleDateString()}</small><br>`;
+      if(post.name) html += `<small>– ${post.name}</small>`;
       card.innerHTML = html;
       container.prepend(card);
     }
 
+    // Fetch posts from JSON every 5 seconds
     async function loadPosts() {
-      const { data: posts, error } = await supabase.from('Submissions').select('*').order('Created_at', { ascending: false });
-      if (error) console.error(error);
-      else posts.forEach(post => renderPost(post));
+      try {
+        const response = await fetch('posts.json'); // hosted JSON from Make
+        if (!response.ok) throw new Error('Could not fetch posts.');
+        const posts = await response.json();
+        // Clear existing cards
+        document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
+        posts.forEach(post => renderPost(post));
+      } catch(err) {
+        console.error(err);
+      }
     }
 
-    // Load posts initially
+    // Initial load and auto-refresh
     loadPosts();
-
-    // Real-time updates
-    supabase.channel('public:Submissions')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Submissions' }, payload => {
-        renderPost(payload.new);
-      })
-      .subscribe();
+    setInterval(loadPosts, 5000);
   </script>
 </body>
 </html>
