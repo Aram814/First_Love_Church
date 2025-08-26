@@ -3,97 +3,190 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Church Needs and Updates</title>
+  <title>First Love Church: Women’s Group Bulletin Board</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-    header { background: #2c3e50; color: white; padding: 1em; text-align: center; }
-    main { padding: 1em; display: flex; flex-direction: column; gap: 1em; }
-    section { background: white; padding: 1em; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h2 { margin-top: 0; }
-    .card-container { display: flex; flex-direction: column; gap: 0.5em; }
-    .card { border: 1px solid #ddd; padding: 0.75em; border-radius: 6px; background: #fafafa; }
-    .card h3 { margin: 0 0 0.5em; }
-    .card small { color: #555; }
-    footer { text-align: center; padding: 1em; background: #2c3e50; color: white; margin-top: 2em; }
+    /* COLORS & RESET */
+    :root {
+      --bg-color: #f5f2ed;
+      --card-bg: #e9e2d0;
+      --text-color: #2b2b2b;
+      --primary-color: #caa72d;
+      --secondary-color: #b83b3b;
+      --footer-color: #045f5f;
+      --button-bg: #b83b3b;
+      --button-hover: #922a2a;
+      --shadow: rgba(0,0,0,0.1);
+      --prayer-color: #fbc02d;
+      --provision-color: #d9c9b6;
+      --event-color: #e0a399;
+      --update-color: #045f5f;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:"Segoe UI",Arial,sans-serif; background:var(--bg-color); color:var(--text-color); line-height:1.6; font-size:1rem; transition: background 0.3s,color 0.3s; }
+
+    header { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; background:var(--bg-color); border-bottom:2px solid var(--primary-color); position:sticky; top:0; z-index:1000; }
+    header .logo img { max-height:60px; }
+    header h1 { font-size:1.6rem; color:var(--secondary-color); margin-left:1rem; }
+
+    nav { background:var(--primary-color); display:flex; justify-content:center; padding:0.5rem 0; position:sticky; top:70px; z-index:999; }
+    .nav-links { display:flex; gap:2rem; list-style:none; }
+    .nav-links a { color:white; text-decoration:none; font-weight:600; }
+    .nav-links a:hover, .nav-links a:focus { text-decoration:underline; }
+
+    .hamburger { display:none; flex-direction:column; cursor:pointer; position:absolute; right:1rem; }
+    .hamburger span { height:3px; width:25px; background:white; margin:4px 0; border-radius:2px; }
+    @media (max-width:768px) { 
+      .nav-links { display:none; flex-direction:column; background:var(--primary-color); position:absolute; top:100%; right:0; width:200px; padding:1rem; }
+      .nav-links.show { display:flex; }
+      .hamburger { display:flex; }
+    }
+
+    .controls { text-align:center; margin:1rem; display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap; }
+    .controls button { background:var(--button-bg); color:var(--bg-color); border:none; border-radius:6px; padding:0.6rem 1rem; font-size:1rem; cursor:pointer; transition: background 0.3s; }
+    .controls button:hover { background:var(--button-hover); }
+
+    .button { display:block; background:var(--button-bg); color:var(--bg-color); padding:1rem; margin:1.5rem auto; border-radius:6px; font-size:1.2rem; text-align:center; border:none; cursor:pointer; max-width:300px; box-shadow:0 3px 6px var(--shadow); transition:background 0.3s; }
+    .button:hover, .button:focus { background:var(--button-hover); }
+
+    .section { margin:2rem auto; width:90%; max-width:900px; }
+    .section h2 { color:var(--secondary-color); border-bottom:2px solid var(--secondary-color); padding-bottom:0.3rem; margin-bottom:1rem; font-size:1.4rem; }
+    .card-container { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:1.2rem; }
+    .card { background:var(--card-bg); border-radius:12px; padding:1rem; box-shadow:0 3px 6px var(--shadow); transition: transform 0.2s; border-left:6px solid transparent; }
+    .card:hover { transform:translateY(-3px); }
+    .card h3 { font-size:1.15rem; margin-bottom:0.5rem; }
+    .card p { font-size:1rem; line-height:1.6; }
+    .card small { display:block; margin-top:0.5rem; color:#555; font-style:italic; }
+    .card.prayer { border-left-color:var(--prayer-color); }
+    .card.provision { border-left-color:var(--provision-color); }
+    .card.event { border-left-color:var(--event-color); }
+    .card.update { border-left-color:var(--update-color); }
+
+    body.dark { background:#2b2b2b; color:#e9e2d0; }
+    body.dark .card { background:#3a2f2f; }
+    body.dark .card small { color:#ccc; }
+    body.large-text { font-size:1.25rem; }
+
+    footer { background:var(--footer-color); color:var(--primary-color); text-align:center; padding:1rem; margin-top:2rem; }
   </style>
+
+  <!-- Tally Embed Script -->
+  <script async src="https://tally.so/widgets/embed.js"></script>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header>
-    <h1>Church Needs and Updates</h1>
+    <div class="logo">
+      <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
+    </div>
+    <h1>Women’s Group Bulletin Board</h1>
   </header>
-  <main>
-    <section id="prayer">
-      <h2>Prayer Requests</h2>
-      <div class="card-container"></div>
-    </section>
-    <section id="provision">
-      <h2>Needs for Provision</h2>
-      <div class="card-container"></div>
-    </section>
-    <section id="event">
-      <h2>Upcoming Events</h2>
-      <div class="card-container"></div>
-    </section>
-    <section id="update">
-      <h2>Other Updates</h2>
-      <div class="card-container"></div>
-    </section>
-  </main>
-  <footer>
-    <p>Church Community Updates – Powered by Supabase</p>
-  </footer>
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <nav>
+    <div class="hamburger" aria-label="Menu" aria-expanded="false" role="button" tabindex="0">
+      <span></span><span></span><span></span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#prayer">Prayer Request</a></li>
+      <li><a href="#provision">Provision Needed</a></li>
+      <li><a href="#event">Event</a></li>
+      <li><a href="#update">Other Update</a></li>
+      <li><a href="members.html">Group Members</a></li>
+    </ul>
+  </nav>
+
+  <div class="controls">
+    <button id="toggle-dark">Toggle Dark Mode</button>
+    <button id="toggle-text">Toggle Larger Text</button>
+  </div>
+
+  <!-- Add a Post Button with Tally popup -->
+  <button class="button" 
+          data-tally-open="w7AQdP" 
+          data-tally-layout="modal" 
+          data-tally-hide-title="1">
+    Add a Post
+  </button>
+
+  <!-- SECTIONS -->
+  <div class="section" id="prayer">
+    <h2>Prayer Request</h2>
+    <div class="card-container"></div>
+  </div>
+
+  <div class="section" id="provision">
+    <h2>Provision Needed</h2>
+    <div class="card-container"></div>
+  </div>
+
+  <div class="section" id="event">
+    <h2>Event</h2>
+    <div class="card-container"></div>
+  </div>
+
+  <div class="section" id="update">
+    <h2>Other Update</h2>
+    <div class="card-container"></div>
+  </div>
+
+  <footer>&copy; First Love Church – Women’s Group</footer>
+
   <script>
+    // Hamburger
+    const hamburger = document.querySelector(".hamburger");
+    const navLinks = document.querySelector(".nav-links");
+    hamburger.addEventListener("click", () => {
+      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
+      hamburger.setAttribute("aria-expanded", !expanded);
+      navLinks.classList.toggle("show");
+    });
+
+    // Preferences
+    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
+    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+    document.getElementById('toggle-dark').addEventListener('click', ()=>{
+      document.body.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    });
+    document.getElementById('toggle-text').addEventListener('click', ()=>{
+      document.body.classList.toggle('large-text');
+      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
+    });
+
     // --- Supabase setup ---
     const supabaseUrl = "https://btercxzikklbkjpltoey.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhZmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc";
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // ✅ Correct: use window.supabase
-    const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const categoryMap = { "Prayer":"prayer", "Provision":"provision", "Event":"event", "Other Update":"update" };
 
-    const categoryMap = { 
-      "Prayer": "prayer", 
-      "Provision": "provision", 
-      "Event": "event", 
-      "Other Update": "update" 
-    };
-
-    function renderPost(post) {
+    function renderPost(post){
       const sectionId = categoryMap[post.Category];
-      if (!sectionId) return;
+      if(!sectionId) return;
       const container = document.querySelector(`#${sectionId} .card-container`);
-      if (!container) return;
+      if(!container) return;
 
       const card = document.createElement('div');
       card.className = `card ${sectionId}`;
       let html = `<h3>${post['Title/Subject']}</h3>`;
       html += `<p>${post['Details/Description']}</p>`;
-      if (post['Event Date'] && sectionId === 'event') {
-        html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
-      }
-      if (post['Name (Optional)']) html += `<small>– ${post['Name (Optional)']}</small>`;
-      if (post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
+      if(post['Event Date'] && sectionId==='event') html += `<small>Date: ${new Date(post['Event Date']).toLocaleDateString()}</small><br>`;
+      if(post['Name (Optional)']) html += `<small>– ${post['Name (Optional)']}</small>`;
+      if(post['Contact Info (Optional)']) html += `<br><small>Contact: ${post['Contact Info (Optional)']}</small>`;
       card.innerHTML = html;
       container.prepend(card);
     }
 
-    async function loadPosts() {
-      const { data: posts, error } = await client
+    async function loadPosts(){
+      const { data: posts, error } = await supabase
         .from('Submissions')
         .select('*')
-        .order('Created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching posts:", error);
-        return;
-      }
-
+        .order('Created_at', { ascending:false });
+      if(error){ console.error("Error fetching posts:", error); return; }
       posts.forEach(post => renderPost(post));
     }
 
-    // Initial load + refresh every 5 seconds
+    // Poll every 5 seconds for live updates
     loadPosts();
     setInterval(loadPosts, 5000);
   </script>
