@@ -3,308 +3,905 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>First Love Church: Women’s Group Bulletin Board</title>
+  <title>Women's Fellowship Bulletin Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* COLORS */
-    :root {
-      --bg-color: #f5f2ed;
-      --card-bg: #e9e2d0;
-      --text-color: #2b2b2b;
-      --primary-color: #caa72d;
-      --secondary-color: #b83b3b;
-      --footer-color: #045f5f;
-      --button-bg: #b83b3b;
-      --button-hover: #922a2a;
-      --shadow: rgba(0,0,0,0.1);
-      --prayer-color: #fbc02d;
-      --provision-color: #d9c9b6;
-      --event-color: #e0a399;
-      --update-color: #045f5f;
-    }
-
-    /* RESET */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
-      line-height: 1.6;
-      font-size: 1rem;
-      transition: background 0.3s, color 0.3s;
+      font-family: 'Inter', sans-serif;
     }
-
-    /* HEADER */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 2rem;
-      background: var(--bg-color);
-      border-bottom: 2px solid var(--primary-color);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    header .logo img { max-height: 60px; }
-    header h1 {
-      font-size: 1.6rem;
-      color: var(--secondary-color);
-      margin-left: 1rem;
-    }
-
-    /* NAVIGATION */
-    nav {
-      background: var(--primary-color);
-      display: flex;
-      justify-content: center;
-      padding: 0.5rem 0;
-      position: sticky;
-      top: 70px;
-      z-index: 999;
-    }
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .nav-links a:hover,
-    .nav-links a:focus { text-decoration: underline; }
-
-    /* HAMBURGER */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-      position: absolute;
-      right: 1rem;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: white;
-      margin: 4px 0;
-      border-radius: 2px;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 200px; padding: 1rem; }
-      .nav-links.show { display: flex; }
-      .hamburger { display: flex; }
-    }
-
-    /* ACCESSIBILITY CONTROLS */
-    .controls { text-align: center; margin: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
-    .controls button {
-      background: var(--button-bg);
-      color: var(--bg-color);
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .controls button:hover { background: var(--button-hover); }
-
-    /* ADD POST BUTTON */
-    .button {
-      display: block;
-      background: var(--button-bg);
-      color: var(--bg-color);
-      padding: 1rem;
-      margin: 1.5rem auto;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      text-align: center;
-      text-decoration: none;
-      max-width: 300px;
-      box-shadow: 0 3px 6px var(--shadow);
-      transition: background 0.3s;
-    }
-    .button:hover, .button:focus { background: var(--button-hover); }
-
-    /* SECTIONS & CARDS */
-    .section { margin: 2rem auto; width: 90%; max-width: 900px; }
-    .section h2 {
-      color: var(--secondary-color);
-      border-bottom: 2px solid var(--secondary-color);
-      padding-bottom: 0.3rem;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-    }
-    .card-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1.2rem;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 3px 6px var(--shadow);
-      transition: transform 0.2s;
-      border-left: 6px solid transparent;
-    }
-    .card:hover { transform: translateY(-3px); }
-    .card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
-    .card p { font-size: 1rem; line-height: 1.6; }
-    .card small { display: block; margin-top: 0.5rem; color: #555; font-style: italic; }
-
-    /* CATEGORY COLORS */
-    .card.prayer { border-left-color: var(--prayer-color); }
-    .card.provision { border-left-color: var(--provision-color); }
-    .card.event { border-left-color: var(--event-color); }
-    .card.update { border-left-color: var(--update-color); }
-
-    /* DARK MODE */
-    body.dark { background: #2b2b2b; color: #e9e2d0; }
-    body.dark .card { background: #3a2f2f; }
-    body.dark .card small { color: #ccc; }
-
-    /* LARGE TEXT */
-    body.large-text { font-size: 1.25rem; }
-
-    /* FOOTER */
-    footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
   </style>
-
-  <!-- Tally Popup -->
-  <script async src="https://tally.so/widgets/embed.js"></script>
 </head>
 <body>
-  <header>
-    <div class="logo">
-      <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
-    </div>
-    <h1>Women’s Group Bulletin Board</h1>
-  </header>
+  <div id="root"></div>
 
-  <nav>
-    <div class="hamburger" aria-label="Menu" aria-expanded="false" role="button" tabindex="0">
-      <span></span><span></span><span></span>
-    </div>
-    <ul class="nav-links">
-      <li><a href="#prayers">Prayer Requests</a></li>
-      <li><a href="#provisions">Provisions Needed</a></li>
-      <li><a href="#events">Events</a></li>
-      <li><a href="#updates">Updates</a></li>
-      <li><a href="members.html">Group Members</a></li>
-    </ul>
-  </nav>
+  <script type="text/babel">
+    const { useState, useEffect, createContext, useContext } = React;
+    const { createClient } = supabase;
 
-  <div class="controls">
-    <button id="toggle-dark">Toggle Dark Mode</button>
-    <button id="toggle-text">Toggle Larger Text</button>
-  </div>
-
-  <!-- Tally Button -->
-  <button class="button" 
-          data-tally-open="w7AQdP" 
-          data-tally-layout="modal" 
-          data-tally-hide-title="1" 
-          data-tally-auto-close="3000" 
-          data-tally-form-events-forwarding="1">
-    Add a Post
-  </button>
-
-  <!-- SECTIONS WITH CATEGORY CARDS -->
-  <div class="section" id="prayers">
-    <h2>Prayer Requests</h2>
-    <div class="card-container"></div>
-  </div>
-
-  <div class="section" id="provisions">
-    <h2>Provisions Needed</h2>
-    <div class="card-container"></div>
-  </div>
-
-  <div class="section" id="events">
-    <h2>Events</h2>
-    <div class="card-container"></div>
-  </div>
-
-  <div class="section" id="updates">
-    <h2>Updates</h2>
-    <div class="card-container"></div>
-  </div>
-
-  <footer>
-    &copy; First Love Church – Women’s Group
-  </footer>
-
-  <script>
-    // Hamburger Menu
-    const hamburger = document.querySelector(".hamburger");
-    const navLinks = document.querySelector(".nav-links");
-    hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navLinks.classList.toggle("show");
-    });
-
-    // Restore Preferences
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
-
-    // Dark Mode Toggle
-    document.getElementById('toggle-dark').addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-    });
-
-    // Large Text Toggle
-    document.getElementById('toggle-text').addEventListener('click', () => {
-      document.body.classList.toggle('large-text');
-      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
-
-    // Category mapping
-    const categoryMap = {
-      "Prayer": "prayers",
-      "Provision": "provisions",
-      "Event": "events",
-      "Other Update": "updates"
+    // Define the colors and styles
+    const tailwindColors = {
+      'bg-color': '#f5f2ed',
+      'card-bg-light': '#e9e2d0',
+      'card-bg-dark': '#3a2f2f',
+      'text-color': '#2b2b2b',
+      'primary-color': '#caa72d',
+      'secondary-color': '#b83b3b',
+      'footer-color': '#045f5f',
+      'button-bg': '#b83b3b',
+      'button-hover': '#922a2a',
+      'shadow': 'rgba(0,0,0,0.1)',
+      'prayer-color': '#fbc02d',
+      'provision-color': '#d9c9b6',
+      'event-color': '#e0a399',
+      'update-color': '#045f5f',
     };
 
-    // Render posts from JSON
-    function renderPost(post) {
-      const sectionId = categoryMap[post.category];
-      if (!sectionId) return;
-      const container = document.querySelector(`#${sectionId} .card-container`);
-      if (!container) return;
+    // --- Contexts for Accessibility and UI State ---
+    const FontSizeContext = createContext();
+    const ThemeContext = createContext();
 
-      const card = document.createElement('div');
-      card.className = `card ${sectionId}`;
-      let html = `<h3>${post.title}</h3>`;
-      html += `<p>${post.details}</p>`;
-      if(post.date && sectionId === 'events') html += `<small>Date: ${new Date(post.date).toLocaleDateString()}</small><br>`;
-      if(post.name) html += `<small>– ${post.name}</small>`;
-      card.innerHTML = html;
-      container.prepend(card);
-    }
+    // Supabase client initialization
+    // IMPORTANT: You MUST replace these placeholders with your actual Supabase URL and key.
+    const supabaseUrl = 'https://btercxzikklbkjpltoey.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc';
+    
+    // Create Supabase instance only if the configuration is valid
+    const isSupabaseConfigValid = supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
+    const supabaseInstance = isSupabaseConfigValid ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
-    // Fetch posts from JSON every 5 seconds
-    async function loadPosts() {
-      try {
-        const response = await fetch('posts.json'); // hosted JSON from Make
-        if (!response.ok) throw new Error('Could not fetch posts.');
-        const posts = await response.json();
-        // Clear existing cards
-        document.querySelectorAll('.card-container').forEach(c => c.innerHTML = '');
-        posts.forEach(post => renderPost(post));
-      } catch(err) {
-        console.error(err);
+    // --- Main App Component ---
+    function App() {
+      const [posts, setPosts] = useState([]);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [isAuthReady, setIsAuthReady] = useState(false);
+      const [localUserId, setLocalUserId] = useState(null);
+      // New state to manage the mobile menu's open/closed state
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+      // Read initial settings from localStorage or use defaults
+      const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
+        const savedFontSize = localStorage.getItem('fontSizeMultiplier');
+        return savedFontSize ? parseFloat(savedFontSize) : 1;
+      });
+
+      const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedDarkMode = localStorage.getItem('isDarkMode');
+        return savedDarkMode === 'true'; // localStorage saves as a string
+      });
+
+      // Handle Supabase initialization and authentication
+      useEffect(() => {
+        if (!isSupabaseConfigValid) {
+            console.error("Supabase credentials are not configured. Please update the placeholders.");
+            return;
+        }
+
+        // Generate a unique user ID and store it in local storage.
+        // This is a simple way to track likes without a full auth system.
+        let id = localStorage.getItem('local_user_id');
+        if (!id) {
+            id = crypto.randomUUID();
+            localStorage.setItem('local_user_id', id);
+        }
+        setLocalUserId(id);
+        
+        // This listener is still useful for potential future authentication
+        const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
+          // You could use session.user.id here if you enable full auth later
+          setIsAuthReady(true);
+        });
+        
+        // Remove listener on cleanup
+        return () => {
+          if (authListener) {
+            authListener.subscription.unsubscribe();
+          }
+        };
+      }, []);
+
+      // Set up the real-time listener for posts
+      useEffect(() => {
+        // Check if auth is ready and config is valid before trying to fetch data
+        if (isAuthReady && isSupabaseConfigValid) {
+          const fetchPosts = async () => {
+            try {
+              const { data, error } = await supabaseInstance
+                .from('posts')
+                .select('*')
+                .order('timestamp', { ascending: false });
+              if (error) throw error;
+              setPosts(data);
+            } catch (error) {
+              console.error("Error fetching posts:", error);
+            }
+          };
+
+          const channel = supabaseInstance.channel('posts-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, payload => {
+              fetchPosts();
+            })
+            .subscribe();
+
+          fetchPosts();
+
+          return () => {
+            supabaseInstance.removeChannel(channel);
+          };
+        }
+      }, [isAuthReady, isSupabaseConfigValid]);
+
+      useEffect(() => {
+        localStorage.setItem('isDarkMode', isDarkMode);
+      }, [isDarkMode]);
+
+      useEffect(() => {
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+      }, [fontSizeMultiplier]);
+
+      const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+      };
+
+      const increaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.min(prev + 0.1, 1.5));
+      };
+
+      const decreaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.max(prev - 0.1, 0.7));
+      };
+
+      const scrollToSection = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          setIsMenuOpen(false); // Close menu after a link is clicked
+        }
+      };
+
+      // Conditionally render based on Supabase configuration
+      if (!isSupabaseConfigValid) {
+          return (
+              <div className="min-h-screen flex items-center justify-center p-4 text-center bg-gray-100">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
+                      <strong className="font-bold">Configuration Error!</strong>
+                      <span className="block sm:inline mt-2">
+                          Please replace the placeholder values 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' in the code with your actual Supabase project credentials.
+                      </span>
+                  </div>
+              </div>
+          );
       }
+
+      // Filter posts into categories
+      const updates = posts.filter(p => p.type === 'Update');
+      const prayerRequests = posts.filter(p => p.type === 'Prayer Request');
+      const provisionsNeeded = posts.filter(p => p.type === 'Provisions Needed');
+      const events = posts.filter(p => p.type === 'Event');
+      
+      const toggleMenu = () => {
+          setIsMenuOpen(!isMenuOpen);
+      };
+
+      return (
+        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+          <FontSizeContext.Provider value={{ fontSizeMultiplier, increaseFontSize, decreaseFontSize }}>
+            <div
+              className={`min-h-screen ${isDarkMode ? 'dark bg-[#2b2b2b] text-white' : 'bg-[#f5f2ed] text-[#2b2b2b]'}`}
+            >
+              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
+              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
+                <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                  {/* The logo is now a clickable link */}
+                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+                    <img
+                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+                      alt="First Love Church Logo"
+                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+                    />
+                  </a>
+                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                    First Love Church
+                  </h1>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={increaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A+
+                  </button>
+                  <button
+                    onClick={decreaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A-
+                  </button>
+                  <button
+                    onClick={toggleDarkMode}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Header Row 2: Bulletin Title and Navigation Buttons */}
+              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
+                  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                      Women's Fellowship Bulletin
+                  </h2>
+                  {/* Hamburger menu button for small screens */}
+                  <button onClick={toggleMenu} className="md:hidden">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                  </button>
+                  {/* Navigation menu for all screens */}
+                  <div
+                    className={`${isMenuOpen ? 'flex' : 'hidden'} flex-col md:flex-row absolute md:static top-full left-0 right-0 z-50 md:z-auto bg-opacity-90 md:bg-opacity-100 p-4 md:p-0 items-center justify-center md:justify-end gap-4 text-sm font-semibold transition-all duration-300 transform`}
+                    style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['primary-color'] }}
+                  >
+                      <button
+                        onClick={() => scrollToSection('updates-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Updates
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('prayer-requests-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Prayer Requests
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('provisions-needed-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Provisions
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('events-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Events
+                      </button>
+                      <a
+                        href="Members.html"
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Members
+                      </a>
+                  </div>
+              </div>
+
+              {/* Post an Update Button - Centered below the headers */}
+              <div className="flex justify-center p-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="p-2 md:p-3 rounded-lg text-sm md:text-base font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                >
+                  Add a Post
+                </button>
+              </div>
+
+              {/* Main Content Area - Posts Feed */}
+              <main className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-8">
+                <div className="col-span-1">
+                  <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
+                  <div className="space-y-4">
+                    {updates.length > 0 ? (
+                      updates.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No updates yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="prayer-requests-section" className="text-xl font-semibold mb-4 text-center">Prayer Requests</h2>
+                  <div className="space-y-4">
+                    {prayerRequests.length > 0 ? (
+                      prayerRequests.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No prayer requests at this time.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="provisions-needed-section" className="text-xl font-semibold mb-4 text-center">Provisions Needed</h2>
+                  <div className="space-y-4">
+                    {provisionsNeeded.length > 0 ? (
+                      provisionsNeeded.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No provisions needed at this time.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="events-section" className="text-xl font-semibold mb-4 text-center">Events</h2>
+                  <div className="space-y-4">
+                    {events.length > 0 ? (
+                      events.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No events scheduled at this time.</div>
+                    )}
+                  </div>
+                </div>
+              </main>
+
+              {/* Footer */}
+              <footer className="w-full text-center p-4 mt-8" style={{ backgroundColor: tailwindColors['footer-color'], color: 'white' }}>
+                <p className="text-sm">&copy; 2024 Women's Fellowship. All rights reserved.</p>
+                <p className="text-xs mt-1">User ID: {localUserId}</p>
+              </footer>
+
+              {/* Post Submission Modal */}
+              {isModalOpen && (
+                <PostModal setIsModalOpen={setIsModalOpen} isAuthReady={isAuthReady} />
+              )}
+            </div>
+          </FontSizeContext.Provider>
+        </ThemeContext.Provider>
+      );
     }
 
-    // Initial load and auto-refresh
-    loadPosts();
-    setInterval(loadPosts, 5000);
+    // --- Post Card Component ---
+    function PostCard({ post, localUserId, isAuthReady }) {
+      const { fontSizeMultiplier } = useContext(FontSizeContext);
+      const { isDarkMode } = useContext(ThemeContext);
+      const [showComments, setShowComments] = useState(false);
+      const [showCommentForm, setShowCommentForm] = useState(false); // New state to control form visibility
+      const [comments, setComments] = useState([]);
+
+      // Live listener for comments on this specific post
+      useEffect(() => {
+        if (isAuthReady && isSupabaseConfigValid && post.id) {
+          const fetchComments = async () => {
+            const { data, error } = await supabaseInstance
+              .from('comments')
+              .select('*')
+              .eq('post_id', post.id)
+              .order('timestamp');
+            if (error) {
+              console.error("Error fetching comments:", error);
+            } else {
+              setComments(data);
+            }
+          };
+
+          const channel = supabaseInstance.channel(`comments-${post.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, payload => {
+              fetchComments();
+            })
+            .subscribe();
+
+          fetchComments();
+
+          return () => {
+            supabaseInstance.removeChannel(channel);
+          };
+        }
+      }, [isAuthReady, isSupabaseConfigValid, post.id]);
+
+      // Function to handle liking a post
+      const handleLike = async () => {
+        // The like button requires a unique ID to function properly.
+        // It's using the locally-generated UUID instead of a Supabase user ID.
+        if (!localUserId || !isSupabaseConfigValid) {
+          // This happens if the local ID isn't set, which shouldn't happen with the new code
+          console.error("User not authenticated or Supabase not configured to like post.");
+          return;
+        }
+
+        try {
+          // Fetch the current post to get the likedBy array
+          const { data: postData, error: fetchError } = await supabaseInstance
+            .from('posts')
+            .select('likes, likedBy')
+            .eq('id', post.id)
+            .single();
+
+          if (fetchError) throw fetchError;
+
+          const likedBy = postData.likedBy || [];
+          // Check if the current user has already liked this post
+          const hasLiked = likedBy.includes(localUserId);
+
+          let newLikes = postData.likes;
+          let newLikedBy = [...likedBy];
+
+          if (hasLiked) {
+            // User wants to unlike
+            newLikes = Math.max(0, newLikes - 1); // Prevent negative likes
+            newLikedBy = newLikedBy.filter(id => id !== localUserId);
+          } else {
+            // User wants to like
+            newLikes = newLikes + 1;
+            newLikedBy.push(localUserId);
+          }
+
+          const { error: updateError } = await supabaseInstance
+            .from('posts')
+            .update({
+              likes: newLikes,
+              likedBy: newLikedBy
+            })
+            .eq('id', post.id);
+
+          if (updateError) throw updateError;
+        } catch (error) {
+          console.error("Error liking/unliking post:", error);
+        }
+      };
+
+      const getCardColor = (type) => {
+        switch (type) {
+          case 'Prayer Request':
+            return tailwindColors['prayer-color'];
+          case 'Provisions Needed':
+            return tailwindColors['provision-color'];
+          case 'Event':
+            return tailwindColors['event-color'];
+          case 'Update':
+          default:
+            return tailwindColors['update-color'];
+        }
+      };
+
+      const formattedTimestamp = post.timestamp ? new Date(post.timestamp).toLocaleString() : 'Just now';
+      const name = post.name || 'Anonymous';
+      const postType = post.type || 'Update';
+      const likesCount = post.likes || 0;
+      const hasLiked = post.likedBy?.includes(localUserId);
+
+      return (
+        <div
+          className="p-4 rounded-lg shadow-md transition-all duration-300"
+          style={{
+            backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
+            borderColor: getCardColor(postType),
+            borderWidth: '2px',
+            fontSize: `${1 * fontSizeMultiplier}rem`,
+          }}
+        >
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center space-x-2">
+              <span
+                className="text-xs font-bold rounded-full py-1 px-3"
+                style={{
+                  backgroundColor: getCardColor(postType),
+                  color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                }}
+              >
+                {postType}
+              </span>
+              {post.type === 'Event' && post.event_date && (
+                <span className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: '#fff', color: '#b83b3b' }}>
+                  Date: {new Date(post.event_date).toLocaleDateString()}
+                  {post.event_time && ` at ${post.event_time}`}
+                </span>
+              )}
+            </div>
+            <span className="text-xs italic" style={{ color: isDarkMode ? 'white' : '#555' }}>
+              Posted by {name} on {formattedTimestamp}
+            </span>
+          </div>
+          <p style={{ color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>{post.content}</p>
+
+          {/* Action buttons (Like & Comment) */}
+          <div className="mt-4 flex items-center space-x-4">
+            <button
+              onClick={handleLike}
+              className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+              style={{ backgroundColor: hasLiked ? tailwindColors['primary-color'] : tailwindColors['button-bg'], color: 'white' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+              </svg>
+              <span>Like ({likesCount})</span>
+            </button>
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+              style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.138C2.462 12.118 2 10.113 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clipRule="evenodd" />
+              </svg>
+              <span>Comments ({comments.length})</span>
+            </button>
+          </div>
+
+          {/* Comments section */}
+          {showComments && (
+            <div className="mt-4 border-t pt-4" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}>
+              <div className="mt-4 space-y-2">
+                {comments.length > 0 ? (
+                  comments.map(comment => (
+                    <div key={comment.id} className="p-3 rounded-lg" style={{ backgroundColor: isDarkMode ? '#4a4a4a' : 'rgba(0,0,0,0.05)' }}>
+                      <p className="text-sm font-semibold" style={{ color: isDarkMode ? 'white' : '#555' }}>
+                        {comment.name || 'Anonymous'}:
+                      </p>
+                      <p className="text-sm" style={{ color: isDarkMode ? '#e0e0e0' : tailwindColors['text-color'] }}>
+                        {comment.content}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center italic text-sm text-gray-500">No comments yet. Be the first!</p>
+                )}
+              </div>
+              <div className="mt-4">
+                {!showCommentForm && (
+                  <button
+                    onClick={() => setShowCommentForm(true)}
+                    className="w-full p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  >
+                    Post Comment
+                  </button>
+                )}
+                {showCommentForm && <CommentForm postId={post.id} isAuthReady={isAuthReady} onCancel={() => setShowCommentForm(false)} />}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- Comment Form Component ---
+    function CommentForm({ postId, isAuthReady, onCancel }) {
+      const [content, setContent] = useState('');
+      const [name, setName] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
+      const [successMessage, setSuccessMessage] = useState('');
+      const { isDarkMode } = useContext(ThemeContext);
+
+      const handleCommentSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMessage('');
+
+        if (!isAuthReady) {
+          setErrorMessage('Please wait for the app to connect before commenting.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!content.trim()) {
+          setErrorMessage('Please write something for your comment.');
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const { error } = await supabaseInstance
+            .from('comments')
+            .insert({
+              content: content.trim(),
+              name: name.trim() || 'Anonymous',
+              post_id: postId,
+              timestamp: new Date().toISOString(),
+            });
+          if (error) throw error;
+          setSuccessMessage('Comment submitted!');
+          setContent('');
+          setName('');
+          setTimeout(() => {
+            setSuccessMessage('');
+            onCancel(); // Close the form after a successful post
+          }, 1500);
+        } catch (error) {
+          console.error("Error adding comment:", error);
+          setErrorMessage("Failed to submit comment. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      return (
+        <form onSubmit={handleCommentSubmit} className="space-y-2">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows="2"
+            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+            placeholder="Add a comment..."
+            style={{
+              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+              outlineColor: tailwindColors['primary-color'],
+            }}
+            required
+          ></textarea>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+            placeholder="Your Name (Optional)"
+            style={{
+              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+              outlineColor: tailwindColors['primary-color'],
+            }}
+          />
+          {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+          {successMessage && <p className="text-green-500 text-sm">{successMessage}</p>}
+          <div className="flex space-x-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+              style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+              style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Posting...' : 'Post Comment'}
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    // --- Post Submission Modal Component ---
+    function PostModal({ setIsModalOpen, isAuthReady }) {
+      const [content, setContent] = useState('');
+      const [name, setName] = useState('');
+      const [postType, setPostType] = useState('Update');
+      const [eventDate, setEventDate] = useState('');
+      const [eventTime, setEventTime] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
+      const [successMessage, setSuccessMessage] = useState('');
+      const { isDarkMode } = useContext(ThemeContext);
+
+      const handlePostSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMessage('');
+
+        if (!isAuthReady) {
+          setErrorMessage('Please wait for the app to connect before posting.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!content.trim()) {
+          setErrorMessage('Please write something for your post.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (postType === 'Event') {
+          if (!eventDate) {
+            setErrorMessage('Please select a date for the event.');
+            setIsLoading(false);
+            return;
+          }
+          if (!eventTime) {
+            setErrorMessage('Please select a time for the event.');
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        try {
+          const { error } = await supabaseInstance
+            .from('posts')
+            .insert({
+              content: content.trim(),
+              name: name.trim() || 'Anonymous',
+              type: postType,
+              timestamp: new Date().toISOString(),
+              event_date: postType === 'Event' ? eventDate : null,
+              event_time: postType === 'Event' ? eventTime : null,
+              likes: 0,
+              likedBy: []
+            });
+          if (error) throw error;
+          setSuccessMessage('Your post has been submitted!');
+          setContent('');
+          setName('');
+          setPostType('Update');
+          setEventDate('');
+          setEventTime('');
+          setTimeout(() => {
+            setIsModalOpen(false);
+          }, 1500); // Close modal after success message
+        } catch (error) {
+          console.error("Error adding post:", error);
+          setErrorMessage("Failed to submit post. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      return (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ zIndex: 1000 }}
+        >
+          <div
+            className={`w-full max-w-lg p-6 rounded-xl shadow-2xl relative transition-all duration-300`}
+            style={{
+              backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+            }}
+          >
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-semibold mb-4 text-center">Create a New Post</h3>
+
+            <form onSubmit={handlePostSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="postContent">
+                  Your Post
+                </label>
+                <textarea
+                  id="postContent"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows="4"
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                  required
+                ></textarea>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Post Type
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Update', 'Prayer Request', 'Provisions Needed', 'Event'].map((type) => (
+                    <label key={type} className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="postType"
+                        value={type}
+                        checked={postType === type}
+                        onChange={(e) => {
+                          setPostType(e.target.value);
+                          if (e.target.value !== 'Event') {
+                            setEventDate('');
+                            setEventTime('');
+                          }
+                        }}
+                        className="form-radio"
+                        style={{ color: tailwindColors['primary-color'] }}
+                      />
+                      <span className="ml-1 text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {postType === 'Event' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="eventDate">
+                      Event Date
+                    </label>
+                    <input
+                      id="eventDate"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="eventTime">
+                      Event Time
+                    </label>
+                    <input
+                      id="eventTime"
+                      type="time"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="postName">
+                  Your Name (Optional)
+                </label>
+                <input
+                  id="postName"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  placeholder="Leave blank for Anonymous"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                />
+              </div>
+
+              {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
+              {successMessage && <p className="text-green-500 text-sm mb-4">{successMessage}</p>}
+
+              <button
+                type="submit"
+                className="w-full p-3 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Submitting...' : 'Submit Post'}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
   </script>
 </body>
 </html>
