@@ -363,7 +363,7 @@
 
               {/* Post Submission Modal */}
               {isModalOpen && (
-                <PostModal setIsModalOpen={setIsModalOpen} isAuthReady={isAuthReady} />
+                <PostModal setIsModalOpen={setIsModalOpen} isAuthReady={isAuthReady} localUserId={localUserId} />
               )}
             </div>
           </FontSizeContext.Provider>
@@ -378,6 +378,8 @@
       const [showComments, setShowComments] = useState(false);
       const [showCommentForm, setShowCommentForm] = useState(false); // New state to control form visibility
       const [comments, setComments] = useState([]);
+      const [isEditing, setIsEditing] = useState(false);
+      const [showDeleteModal, setShowDeleteModal] = useState(false);
 
       // Live listener for comments on this specific post
       useEffect(() => {
@@ -460,6 +462,29 @@
         }
       };
 
+      const handleDelete = async () => {
+        try {
+          // Delete comments first to avoid foreign key constraints
+          const { error: commentError } = await supabaseInstance
+            .from('comments')
+            .delete()
+            .eq('post_id', post.id);
+          if (commentError) throw commentError;
+
+          // Then delete the post itself
+          const { error: postError } = await supabaseInstance
+            .from('posts')
+            .delete()
+            .eq('id', post.id);
+          if (postError) throw postError;
+          console.log("Post deleted successfully.");
+        } catch (error) {
+          console.error("Error deleting post:", error);
+        } finally {
+          setShowDeleteModal(false);
+        }
+      };
+
       const getCardColor = (type) => {
         switch (type) {
           case 'Prayer Request':
@@ -479,10 +504,17 @@
       const postType = post.type || 'Update';
       const likesCount = post.likes || 0;
       const hasLiked = post.likedBy?.includes(localUserId);
+      const isPostOwner = post.user_id === localUserId;
+
+      if (isEditing) {
+        return (
+          <EditPostForm post={post} setIsEditing={setIsEditing} />
+        );
+      }
 
       return (
         <div
-          className="p-4 rounded-lg shadow-md transition-all duration-300"
+          className="p-4 rounded-lg shadow-md transition-all duration-300 relative"
           style={{
             backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
             borderColor: getCardColor(postType),
@@ -490,6 +522,31 @@
             fontSize: `${1 * fontSizeMultiplier}rem`,
           }}
         >
+          {isPostOwner && (
+            <div className="absolute top-2 right-2 flex space-x-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
+                style={{ backgroundColor: tailwindColors['primary-color'] }}
+                title="Edit Post"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
+                style={{ backgroundColor: tailwindColors['secondary-color'] }}
+                title="Delete Post"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-2">
             <div className="flex items-center space-x-2">
               <span
@@ -570,6 +627,13 @@
                 {showCommentForm && <CommentForm postId={post.id} isAuthReady={isAuthReady} onCancel={() => setShowCommentForm(false)} />}
               </div>
             </div>
+          )}
+
+          {showDeleteModal && (
+            <ConfirmDeleteModal
+              onConfirm={handleDelete}
+              onCancel={() => setShowDeleteModal(false)}
+            />
           )}
         </div>
       );
@@ -680,7 +744,7 @@
     }
 
     // --- Post Submission Modal Component ---
-    function PostModal({ setIsModalOpen, isAuthReady }) {
+    function PostModal({ setIsModalOpen, isAuthReady, localUserId }) {
       const [content, setContent] = useState('');
       const [name, setName] = useState('');
       const [postType, setPostType] = useState('Update');
@@ -731,6 +795,7 @@
               timestamp: new Date().toISOString(),
               event_date: postType === 'Event' ? eventDate : null,
               event_time: postType === 'Event' ? eventTime : null,
+              user_id: localUserId, // Add the user's ID to the post
               likes: 0,
               likedBy: []
             });
@@ -896,6 +961,252 @@
                 {isLoading ? 'Submitting...' : 'Submit Post'}
               </button>
             </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Edit Post Form Component ---
+    function EditPostForm({ post, setIsEditing }) {
+      const [content, setContent] = useState(post.content);
+      const [name, setName] = useState(post.name);
+      const [postType, setPostType] = useState(post.type);
+      const [eventDate, setEventDate] = useState(post.event_date || '');
+      const [eventTime, setEventTime] = useState(post.event_time || '');
+      const [isLoading, setIsLoading] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
+      const { isDarkMode } = useContext(ThemeContext);
+
+      const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMessage('');
+
+        if (!content.trim()) {
+          setErrorMessage('Please write something for your post.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (postType === 'Event') {
+          if (!eventDate || !eventTime) {
+            setErrorMessage('Please provide a date and time for the event.');
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        try {
+          const { error } = await supabaseInstance
+            .from('posts')
+            .update({
+              content: content.trim(),
+              name: name.trim() || 'Anonymous',
+              type: postType,
+              event_date: postType === 'Event' ? eventDate : null,
+              event_time: postType === 'Event' ? eventTime : null,
+            })
+            .eq('id', post.id);
+
+          if (error) throw error;
+          setIsEditing(false); // Exit edit mode on success
+        } catch (error) {
+          console.error("Error updating post:", error);
+          setErrorMessage("Failed to update post. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      return (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ zIndex: 1000 }}
+        >
+          <div
+            className={`w-full max-w-lg p-6 rounded-xl shadow-2xl relative transition-all duration-300`}
+            style={{
+              backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+            }}
+          >
+            <button
+              onClick={() => setIsEditing(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-semibold mb-4 text-center">Edit Post</h3>
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="editContent">
+                  Post Content
+                </label>
+                <textarea
+                  id="editContent"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows="4"
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                  required
+                ></textarea>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Post Type
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Update', 'Prayer Request', 'Provisions Needed', 'Event'].map((type) => (
+                    <label key={type} className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="postType"
+                        value={type}
+                        checked={postType === type}
+                        onChange={(e) => {
+                          setPostType(e.target.value);
+                          if (e.target.value !== 'Event') {
+                            setEventDate('');
+                            setEventTime('');
+                          }
+                        }}
+                        className="form-radio"
+                        style={{ color: tailwindColors['primary-color'] }}
+                      />
+                      <span className="ml-1 text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {postType === 'Event' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="editEventDate">
+                      Event Date
+                    </label>
+                    <input
+                      id="editEventDate"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="editEventTime">
+                      Event Time
+                    </label>
+                    <input
+                      id="editEventTime"
+                      type="time"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="editName">
+                  Your Name (Optional)
+                </label>
+                <input
+                  id="editName"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  placeholder="Leave blank for Anonymous"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                />
+              </div>
+
+              {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
+
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 p-3 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 p-3 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // --- Confirm Delete Modal Component ---
+    function ConfirmDeleteModal({ onConfirm, onCancel }) {
+      const { isDarkMode } = useContext(ThemeContext);
+
+      return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div
+            className={`w-full max-w-sm p-6 rounded-lg shadow-xl`}
+            style={{
+              backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+            }}
+          >
+            <h4 className="text-lg font-bold mb-4">Are you sure?</h4>
+            <p className="mb-6">This post will be permanently deleted. This action cannot be undone.</p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: tailwindColors['secondary-color'], color: 'white' }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       );
