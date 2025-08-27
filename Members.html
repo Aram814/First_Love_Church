@@ -3,215 +3,272 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Women's Group Members – First Love Church</title>
+  <title>Members - Women's Fellowship</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* COLORS */
-    :root {
-      --bg-color: #f5f2ed;
-      --card-bg: #e9e2d0;
-      --text-color: #2b2b2b;
-      --primary-color: #caa72d;
-      --secondary-color: #b83b3b;
-      --footer-color: #045f5f;
-      --button-bg: #b83b3b;
-      --button-hover: #922a2a;
-      --shadow: rgba(0,0,0,0.1);
-    }
-
-    /* RESET */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
-      line-height: 1.6;
-      font-size: 1rem;
-      transition: background 0.3s, color 0.3s;
+      font-family: 'Inter', sans-serif;
     }
-
-    /* HEADER */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem 2rem;
-      background: var(--bg-color);
-      border-bottom: 2px solid var(--primary-color);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+    .profile-card {
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    header .logo img { max-height: 60px; }
-    header h1 {
-      font-size: 1.6rem;
-      color: var(--secondary-color);
-      margin-left: 1rem;
+    .profile-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
-
-    /* NAVIGATION */
-    nav {
-      background: var(--primary-color);
-      display: flex;
-      justify-content: center;
-      padding: 0.5rem 0;
-      position: sticky;
-      top: 70px;
-      z-index: 999;
-    }
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .nav-links a:hover,
-    .nav-links a:focus { text-decoration: underline; }
-
-    /* HAMBURGER */
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      cursor: pointer;
-      position: absolute;
-      right: 1rem;
-    }
-    .hamburger span {
-      height: 3px;
-      width: 25px;
-      background: white;
-      margin: 4px 0;
-      border-radius: 2px;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links { display: none; flex-direction: column; background: var(--primary-color); position: absolute; top: 100%; right: 0; width: 150px; padding: 1rem; }
-      .nav-links.show { display: flex; }
-      .hamburger { display: flex; }
-    }
-
-    /* ACCESSIBILITY CONTROLS */
-    .controls { text-align: center; margin: 1rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
-    .controls button {
-      background: var(--button-bg);
-      color: var(--bg-color);
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .controls button:hover { background: var(--button-hover); }
-
-    /* SECTION */
-    .section { margin: 2rem auto; width: 90%; max-width: 900px; }
-    .section h2 {
-      color: var(--secondary-color);
-      border-bottom: 2px solid var(--secondary-color);
-      padding-bottom: 0.3rem;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-      text-align: center;
-    }
-
-    /* CARD FOR TALLY FORM */
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 3px 6px var(--shadow);
-      margin: 0 auto;
-      max-width: 700px;
-      transition: transform 0.2s;
-    }
-    .card:hover { transform: translateY(-2px); }
-
-    .card iframe {
-      width: 100%;
-      min-height: 600px;
-      border: none;
-      border-radius: 8px;
-    }
-
-    /* DARK MODE */
-    body.dark { background: #2b2b2b; color: #e9e2d0; }
-    body.dark .card { background: #3a2f2f; }
-
-    /* LARGE TEXT */
-    body.large-text { font-size: 1.25rem; }
-
-    /* FOOTER */
-    footer { background: var(--footer-color); color: var(--primary-color); text-align: center; padding: 1rem; margin-top: 2rem; }
-
-    /* FOCUS STYLES */
-    a:focus, button:focus { outline: 3px solid var(--primary-color); outline-offset: 2px; }
   </style>
 </head>
 <body>
-  <header>
-  <div class="logo">
-    <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener">
-      <img src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png" alt="First Love Church Logo">
-    </a>
-  </div>
-  <h1>Women's Group Members</h1>
-</header>
+  <div id="root"></div>
 
+  <script type="text/babel">
+    const { useState, useEffect, createContext, useContext } = React;
+    const { createClient } = supabase;
 
-  <nav>
-    <div class="hamburger" aria-label="Menu" aria-expanded="false" role="button" tabindex="0">
-      <span></span><span></span><span></span>
-    </div>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-    </ul>
-  </nav>
+    // Define the colors and styles
+    const tailwindColors = {
+      'bg-color': '#f5f2ed',
+      'card-bg-light': '#e9e2d0',
+      'card-bg-dark': '#3a2f2f',
+      'text-color': '#2b2b2b',
+      'primary-color': '#caa72d',
+      'secondary-color': '#b83b3b',
+      'footer-color': '#045f5f',
+      'button-bg': '#b83b3b',
+      'button-hover': '#922a2a',
+      'shadow': 'rgba(0,0,0,0.1)',
+      'prayer-color': '#fbc02d',
+      'provision-color': '#d9c9b6',
+      'event-color': '#e0a399',
+      'update-color': '#045f5f',
+    };
 
-  <div class="controls">
-    <button id="toggle-dark">Toggle Dark Mode</button>
-    <button id="toggle-text">Toggle Larger Text</button>
-  </div>
+    // --- Contexts for Accessibility and UI State ---
+    const FontSizeContext = createContext();
+    const ThemeContext = createContext();
 
-  <div class="section">
-    <h2>Submit Your Contact Info</h2>
-    <div class="card">
-      <iframe src="https://tally.so/embed/your-form-id" title="Group Members Form"></iframe>
-    </div>
-  </div>
+    // Supabase client initialization
+    // IMPORTANT: Replace with your actual Supabase URL and key
+    const supabaseUrl = 'https://btercxzikklbkjpltoey.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc';
+    const isSupabaseConfigValid = supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
+    const supabaseInstance = isSupabaseConfigValid ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
-  <footer>
-    &copy; First Love Church – Women’s Group
-  </footer>
+    // Dummy member data - now with a 'type' for colored frames
+    const dummyMembers = [
+      { id: 1, name: "Sister Jane Doe", phone: "(555) 123-4567", email: "jane.doe@email.com", extra_details: "A dedicated servant of the Lord. Loves knitting and gardening.", type: 'Leadership' },
+      { id: 2, name: "Sister Mary Smith", phone: "(555) 234-5678", email: "mary.smith@email.com", extra_details: "Passionate about spreading the gospel through music.", type: 'Music' },
+      { id: 3, name: "Sister Sarah Johnson", phone: "(555) 345-6789", email: "sarah.j@email.com", extra_details: "A Bible study leader and mentor to young women.", type: 'Bible Study' },
+      { id: 4, name: "Sister Brenda Lee", phone: "(555) 456-7890", email: "brenda.lee@email.com", extra_details: "Known for her hospitality and delicious baking.", type: 'Hospitality' },
+      { id: 5, name: "Sister Eleanor Vance", phone: "(555) 567-8901", email: "e.vance@email.com", extra_details: "An intercessor with a heart for the broken.", type: 'Intercessory' },
+    ];
 
-  <script>
-    // Hamburger Menu
-    const hamburger = document.querySelector(".hamburger");
-    const navLinks = document.querySelector(".nav-links");
-    hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navLinks.classList.toggle("show");
-    });
+    // --- Main App Component ---
+    function App() {
+      const [members, setMembers] = useState(dummyMembers); // Use dummy data initially
+      const [isAuthReady, setIsAuthReady] = useState(false);
 
-    // Restore Preferences
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark');
-    if (localStorage.getItem('largeText') === 'true') document.body.classList.add('large-text');
+      // Read initial settings from localStorage or use defaults
+      const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
+        const savedFontSize = localStorage.getItem('fontSizeMultiplier');
+        return savedFontSize ? parseFloat(savedFontSize) : 1;
+      });
 
-    // Dark Mode Toggle
-    document.getElementById('toggle-dark').addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-    });
+      const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedDarkMode = localStorage.getItem('isDarkMode');
+        return savedDarkMode === 'true';
+      });
 
-    // Large Text Toggle
-    document.getElementById('toggle-text').addEventListener('click', () => {
-      document.body.classList.toggle('large-text');
-      localStorage.setItem('largeText', document.body.classList.contains('large-text'));
-    });
+      // Handle Supabase initialization and authentication
+      useEffect(() => {
+        if (!isSupabaseConfigValid) {
+            console.error("Supabase credentials are not configured.");
+            return;
+        }
+
+        const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
+          setIsAuthReady(true);
+        });
+        
+        return () => {
+          if (authListener) {
+            authListener.subscription.unsubscribe();
+          }
+        };
+      }, []);
+
+      useEffect(() => {
+        // Fetch members from Supabase in the future
+        // For now, we'll just use the dummy data
+      }, [isAuthReady, isSupabaseConfigValid]);
+
+      useEffect(() => {
+        localStorage.setItem('isDarkMode', isDarkMode);
+      }, [isDarkMode]);
+
+      useEffect(() => {
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+      }, [fontSizeMultiplier]);
+
+      const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+      };
+
+      const increaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.min(prev + 0.1, 1.5));
+      };
+
+      const decreaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.max(prev - 0.1, 0.7));
+      };
+
+      return (
+        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+          <FontSizeContext.Provider value={{ fontSizeMultiplier, increaseFontSize, decreaseFontSize }}>
+            <div
+              className={`min-h-screen ${isDarkMode ? 'dark bg-[#2b2b2b] text-white' : 'bg-[#f5f2ed] text-[#2b2b2b]'}`}
+            >
+              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
+              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
+                <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+                    <img
+                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+                      alt="First Love Church Logo"
+                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+                    />
+                  </a>
+                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                    First Love Church
+                  </h1>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={increaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A+
+                  </button>
+                  <button
+                    onClick={decreaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A-
+                  </button>
+                  <button
+                    onClick={toggleDarkMode}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Header Row 2: Bulletin Title and Navigation Buttons */}
+              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
+                  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                      Women's Fellowship Bulletin
+                  </h2>
+                  {/* The navigation now only has the Bulletin Board link as requested */}
+                  <div
+                    className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-4 text-sm font-semibold transition-all duration-300 transform"
+                  >
+                      <a
+                        href="https://aram814.github.io/First_Love_Church/"
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                        style={{ color: tailwindColors['text-color'] }}
+                      >
+                          Bulletin Board
+                      </a>
+                  </div>
+              </div>
+
+              {/* Main Content Area - Members Gallery */}
+              <main className="p-4 md:p-6 max-w-4xl mx-auto">
+                <h2 id="members-section" className="text-2xl font-bold mb-6 text-center">Fellowship Members</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {members.map(member => (
+                    <MemberCard
+                      key={member.id}
+                      member={member}
+                      isDarkMode={isDarkMode}
+                      fontSizeMultiplier={fontSizeMultiplier}
+                    />
+                  ))}
+                </div>
+              </main>
+
+              {/* Footer */}
+              <footer className="w-full text-center p-4 mt-8" style={{ backgroundColor: tailwindColors['footer-color'], color: 'white' }}>
+                <p className="text-sm">&copy; 2025 Women's Fellowship.</p>
+                <p className="text-sm">&copy; 2000 First Love Church. All rights reserved.</p>
+              </footer>
+            </div>
+          </FontSizeContext.Provider>
+        </ThemeContext.Provider>
+      );
+    }
+
+    // New helper function to get card color based on type
+    const getCardColor = (type) => {
+      switch (type) {
+        case 'Leadership':
+          return tailwindColors['prayer-color'];
+        case 'Music':
+          return tailwindColors['provision-color'];
+        case 'Bible Study':
+          return tailwindColors['event-color'];
+        case 'Hospitality':
+          return tailwindColors['secondary-color'];
+        case 'Intercessory':
+          return tailwindColors['update-color'];
+        default:
+          return tailwindColors['text-color'];
+      }
+    };
+
+    function MemberCard({ member, isDarkMode, fontSizeMultiplier }) {
+      const cardBg = isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'];
+      const textColor = isDarkMode ? 'white' : tailwindColors['text-color'];
+      const borderColor = getCardColor(member.type);
+      
+      return (
+        <div
+          className="profile-card p-4 rounded-lg shadow-md flex flex-col items-center text-center space-y-3"
+          style={{
+            backgroundColor: cardBg,
+            color: textColor,
+            fontSize: `${1 * fontSizeMultiplier}rem`,
+            borderColor: borderColor,
+            borderWidth: '2px',
+          }}
+        >
+          {/* Removed the photo placeholder as requested */}
+          <h3 className="text-xl font-semibold">{member.name}</h3>
+          <div className="w-full text-left space-y-2 text-sm pt-2"
+            style={{
+              borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+            }}
+          >
+            <p><span className="font-semibold">Phone:</span> {member.phone}</p>
+            <p><span className="font-semibold">Email:</span> {member.email}</p>
+            <p><span className="font-semibold">Details:</span> {member.extra_details}</p>
+          </div>
+        </div>
+      );
+    }
+    
+    ReactDOM.render(<App />, document.getElementById('root'));
   </script>
 </body>
 </html>
