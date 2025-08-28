@@ -180,10 +180,10 @@
       }
 
       // Filter posts into categories
-      const updates = posts.filter(p => p.type === 'Update');
       const prayerRequests = posts.filter(p => p.type === 'Prayer Request');
       const provisionsNeeded = posts.filter(p => p.type === 'Provisions Needed');
       const events = posts.filter(p => p.type === 'Event');
+      const updates = posts.filter(p => p.type === 'Update');
       
       const toggleMenu = () => {
           setIsMenuOpen(!isMenuOpen);
@@ -245,13 +245,6 @@
   {/* A separate container for the navigation buttons on the right */}
   <div className="flex space-x-4">
     <button
-      onClick={() => scrollToSection('updates-section')}
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Updates
-    </button>
-    <button
       onClick={() => scrollToSection('prayer-requests-section')}
       className="hover:underline transition-transform duration-200 hover:scale-105"
       style={{ color: tailwindColors['text-color'] }}
@@ -271,6 +264,13 @@
       style={{ color: tailwindColors['text-color'] }}
     >
       Events
+    </button>
+    <button
+      onClick={() => scrollToSection('updates-section')}
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Updates
     </button>
     <a
       href="Members.html"
@@ -295,19 +295,6 @@
 
               {/* Main Content Area - Posts Feed */}
               <main className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-8">
-                <div className="col-span-1">
-                  <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
-                  <div className="space-y-4">
-                    {updates.length > 0 ? (
-                      updates.map(post => (
-                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 italic">No updates yet.</div>
-                    )}
-                  </div>
-                </div>
-
                 <div className="col-span-1">
                   <h2 id="prayer-requests-section" className="text-xl font-semibold mb-4 text-center">Prayer Requests</h2>
                   <div className="space-y-4">
@@ -343,6 +330,18 @@
                       ))
                     ) : (
                       <div className="text-center text-gray-500 italic">No events scheduled at this time.</div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
+                  <div className="space-y-4">
+                    {updates.length > 0 ? (
+                      updates.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No updates yet.</div>
                     )}
                   </div>
                 </div>
