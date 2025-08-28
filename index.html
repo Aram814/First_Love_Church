@@ -237,57 +237,50 @@
 
               {/* Header Row 2: Bulletin Title and Navigation Buttons */}
               <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
-                  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                      Women's Fellowship Bulletin
-                  </h2>
-                  {/* Hamburger menu button for small screens */}
-                  <button onClick={toggleMenu} className="md:hidden">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                  </button>
-                  {/* Navigation menu for all screens */}
-                  <div
-                    className={`${isMenuOpen ? 'flex' : 'hidden'} flex-col md:flex-row absolute md:static top-full left-0 right-0 z-50 md:z-auto bg-opacity-90 md:bg-opacity-100 p-4 md:p-0 items-center justify-center md:justify-end gap-4 text-sm font-semibold transition-all duration-300 transform`}
-                    style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['primary-color'] }}
-                  >
-                      <button
-                        onClick={() => scrollToSection('updates-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Updates
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('prayer-requests-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Prayer Requests
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('provisions-needed-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Provisions
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('events-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Events
-                      </button>
-                      <a
-                        href="Members.html"
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Members
-                      </a>
-                  </div>
-              </div>
+  {/* The main title on the left */}
+  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+    Women's Fellowship Bulletin
+  </h2>
+
+  {/* A separate container for the navigation buttons on the right */}
+  <div className="flex space-x-4">
+    <button
+      onClick={() => scrollToSection('updates-section')}
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Updates
+    </button>
+    <button
+      onClick={() => scrollToSection('prayer-requests-section')}
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Prayer Requests
+    </button>
+    <button
+      onClick={() => scrollToSection('provisions-needed-section')}
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Provisions
+    </button>
+    <button
+      onClick={() => scrollToSection('events-section')}
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Events
+    </button>
+    <a
+      href="Members.html"
+      className="hover:underline transition-transform duration-200 hover:scale-105"
+      style={{ color: tailwindColors['text-color'] }}
+    >
+      Members
+    </a>
+  </div>
+</div>
 
               {/* Post an Update Button - Centered below the headers */}
               <div className="flex justify-center p-4">
