@@ -195,92 +195,98 @@
             <div
               className={`min-h-screen ${isDarkMode ? 'dark bg-[#2b2b2b] text-white' : 'bg-[#f5f2ed] text-[#2b2b2b]'}`}
             >
-              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
-              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
-                <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                  {/* The logo is now a clickable link */}
-                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
-                    <img
-                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
-                      alt="First Love Church Logo"
-                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
-                    />
-                  </a>
-                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                    First Love Church
-                  </h1>
+              <header>
+                {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
+                <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
+                  <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                    {/* The logo is now a clickable link */}
+                    <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer" aria-label="Go to First Love Church Website">
+                      <img
+                        src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+                        alt="First Love Church Logo"
+                        className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+                      />
+                    </a>
+                    <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                      First Love Church
+                    </h1>
+                  </div>
+                  <nav className="flex space-x-2" aria-label="Accessibility Settings">
+                    <button
+                      onClick={increaseFontSize}
+                      className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                      style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                      aria-label="Increase Font Size"
+                    >
+                      A+
+                    </button>
+                    <button
+                      onClick={decreaseFontSize}
+                      className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                      style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                      aria-label="Decrease Font Size"
+                    >
+                      A-
+                    </button>
+                    <button
+                      onClick={toggleDarkMode}
+                      className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                      style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                      aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                    >
+                      {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                  </nav>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={increaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    A+
-                  </button>
-                  <button
-                    onClick={decreaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    A-
-                  </button>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                  </button>
+
+                {/* Header Row 2: Bulletin Title and Navigation Buttons */}
+                <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
+                  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                    Women's Fellowship Bulletin
+                  </h2>
+                  <nav className="flex space-x-4">
+                    <button
+                      onClick={() => scrollToSection('prayer-requests-section')}
+                      className="hover:underline transition-transform duration-200 hover:scale-105"
+                      style={{ color: tailwindColors['text-color'] }}
+                      aria-label="View Prayer Requests section"
+                    >
+                      Prayer Requests
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('provisions-needed-section')}
+                      className="hover:underline transition-transform duration-200 hover:scale-105"
+                      style={{ color: tailwindColors['text-color'] }}
+                      aria-label="View Provisions Needed section"
+                    >
+                      Provisions
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('events-section')}
+                      className="hover:underline transition-transform duration-200 hover:scale-105"
+                      style={{ color: tailwindColors['text-color'] }}
+                      aria-label="View Events section"
+                    >
+                      Events
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('updates-section')}
+                      className="hover:underline transition-transform duration-200 hover:scale-105"
+                      style={{ color: tailwindColors['text-color'] }}
+                      aria-label="View Updates section"
+                    >
+                      Updates
+                    </button>
+                    <a
+                      href="Members.html"
+                      className="hover:underline transition-transform duration-200 hover:scale-105"
+                      style={{ color: tailwindColors['text-color'] }}
+                    >
+                      Members
+                    </a>
+                  </nav>
                 </div>
-              </div>
-
-              {/* Header Row 2: Bulletin Title and Navigation Buttons */}
-              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
-  {/* The main title on the left */}
-  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-    Women's Fellowship Bulletin
-  </h2>
-
-  {/* A separate container for the navigation buttons on the right */}
-  <div className="flex space-x-4">
-    <button
-      onClick={() => scrollToSection('prayer-requests-section')}
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Prayer Requests
-    </button>
-    <button
-      onClick={() => scrollToSection('provisions-needed-section')}
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Provisions
-    </button>
-    <button
-      onClick={() => scrollToSection('events-section')}
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Events
-    </button>
-    <button
-      onClick={() => scrollToSection('updates-section')}
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Updates
-    </button>
-    <a
-      href="Members.html"
-      className="hover:underline transition-transform duration-200 hover:scale-105"
-      style={{ color: tailwindColors['text-color'] }}
-    >
-      Members
-    </a>
-  </div>
-</div>
+              </header>
 
               {/* Post an Update Button - Centered below the headers */}
               <div className="flex justify-center p-4">
@@ -295,7 +301,7 @@
 
               {/* Main Content Area - Posts Feed */}
               <main className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-8">
-                <div className="col-span-1">
+                <section>
                   <h2 id="prayer-requests-section" className="text-xl font-semibold mb-4 text-center">Prayer Requests</h2>
                   <div className="space-y-4">
                     {prayerRequests.length > 0 ? (
@@ -306,9 +312,9 @@
                       <div className="text-center text-gray-500 italic">No prayer requests at this time.</div>
                     )}
                   </div>
-                </div>
+                </section>
 
-                <div className="col-span-1">
+                <section>
                   <h2 id="provisions-needed-section" className="text-xl font-semibold mb-4 text-center">Provisions Needed</h2>
                   <div className="space-y-4">
                     {provisionsNeeded.length > 0 ? (
@@ -319,9 +325,9 @@
                       <div className="text-center text-gray-500 italic">No provisions needed at this time.</div>
                     )}
                   </div>
-                </div>
+                </section>
 
-                <div className="col-span-1">
+                <section>
                   <h2 id="events-section" className="text-xl font-semibold mb-4 text-center">Events</h2>
                   <div className="space-y-4">
                     {events.length > 0 ? (
@@ -332,8 +338,8 @@
                       <div className="text-center text-gray-500 italic">No events scheduled at this time.</div>
                     )}
                   </div>
-                </div>
-                <div className="col-span-1">
+                </section>
+                <section>
                   <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
                   <div className="space-y-4">
                     {updates.length > 0 ? (
@@ -344,7 +350,7 @@
                       <div className="text-center text-gray-500 italic">No updates yet.</div>
                     )}
                   </div>
-                </div>
+                </section>
               </main>
 
               {/* Footer */}
@@ -569,6 +575,7 @@
               onClick={handleLike}
               className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
               style={{ backgroundColor: hasLiked ? tailwindColors['primary-color'] : tailwindColors['button-bg'], color: 'white' }}
+              aria-label={hasLiked ? 'Unlike this post' : 'Like this post'}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
@@ -579,6 +586,7 @@
               onClick={() => setShowComments(!showComments)}
               className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
               style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+              aria-label={showComments ? 'Hide comments' : `Show comments (${comments.length})`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.138C2.462 12.118 2 10.113 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clipRule="evenodd" />
