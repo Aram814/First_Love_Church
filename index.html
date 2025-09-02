@@ -22,7 +22,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, createContext, useContext } = React;
+    const { useState, useEffect, createContext, useContext, useRef } = React;
     const { createClient } = supabase;
 
     // Define the colors and styles
@@ -75,6 +75,8 @@
         const savedDarkMode = localStorage.getItem('isDarkMode');
         return savedDarkMode === 'true'; // localStorage saves as a string
       });
+      
+      const addPostButtonRef = useRef(null);
 
       // Handle Supabase initialization and authentication
       useEffect(() => {
@@ -168,6 +170,14 @@
       const toggleMenu = () => {
           setIsMenuOpen(!isMenuOpen);
       };
+      
+      // Function to close the modal and restore focus to the button that opened it.
+      const handleCloseModal = () => {
+        setIsModalOpen(false);
+        if (addPostButtonRef.current) {
+          addPostButtonRef.current.focus();
+        }
+      };
 
       // Conditionally render based on Supabase configuration
       if (!isSupabaseConfigValid) {
@@ -215,6 +225,7 @@
                     onClick={increaseFontSize}
                     className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
                     style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                    aria-label="Increase font size"
                   >
                     A+
                   </button>
@@ -222,6 +233,7 @@
                     onClick={decreaseFontSize}
                     className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
                     style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                    aria-label="Decrease font size"
                   >
                     A-
                   </button>
@@ -229,6 +241,7 @@
                     onClick={toggleDarkMode}
                     className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
                     style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                    aria-label={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}
                   >
                     {isDarkMode ? 'Light Mode' : 'Dark Mode'}
                   </button>
@@ -248,6 +261,8 @@
                     onClick={toggleMenu}
                     className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 flex items-center"
                     style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                    aria-expanded={isMenuOpen}
+                    aria-controls="menu-dropdown"
                   >
                     MENU
                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-2 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
@@ -255,7 +270,7 @@
                     </svg>
                   </button>
                   {isMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-10 flex flex-col items-end space-y-2 p-4" style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'], color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>
+                    <div id="menu-dropdown" className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-10 flex flex-col items-end space-y-2 p-4" style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'], color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>
                       <button
                         onClick={() => scrollToSection('updates-section')}
                         className="hover:underline transition-transform duration-200 hover:scale-105"
@@ -303,6 +318,7 @@
                   onClick={() => setIsModalOpen(true)}
                   className="p-2 md:p-3 rounded-lg text-sm md:text-base font-semibold transition-transform duration-200 hover:scale-105"
                   style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  ref={addPostButtonRef}
                 >
                   Add a Post
                 </button>
@@ -371,7 +387,7 @@
 
               {/* Post Submission Modal */}
               {isModalOpen && (
-                <PostModal setIsModalOpen={setIsModalOpen} isAuthReady={isAuthReady} localUserId={localUserId} />
+                <PostModal setIsModalOpen={handleCloseModal} isAuthReady={isAuthReady} localUserId={localUserId} />
               )}
             </div>
           </FontSizeContext.Provider>
@@ -388,6 +404,7 @@
       const [comments, setComments] = useState([]);
       const [isEditing, setIsEditing] = useState(false);
       const [showDeleteModal, setShowDeleteModal] = useState(false);
+      const editButtonRef = useRef(null);
 
       // Live listener for comments on this specific post
       useEffect(() => {
@@ -490,6 +507,10 @@
           console.error("Error deleting post:", error);
         } finally {
           setShowDeleteModal(false);
+          // Focus on the edit button once the modal is gone
+          if (editButtonRef.current) {
+            editButtonRef.current.focus();
+          }
         }
       };
 
@@ -581,8 +602,9 @@
                 onClick={handleLike}
                 className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
                 style={{ backgroundColor: hasLiked ? tailwindColors['primary-color'] : tailwindColors['button-bg'], color: 'white' }}
+                aria-label={hasLiked ? "Unlike post" : "Like post"}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                 </svg>
                 <span>Like ({likesCount})</span>
@@ -591,8 +613,9 @@
                 onClick={() => setShowComments(!showComments)}
                 className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
                 style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                aria-label={`View or add comments (${comments.length})`}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.138C2.462 12.118 2 10.113 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clipRule="evenodd" />
                 </svg>
                 <span>Comments ({comments.length})</span>
@@ -604,9 +627,10 @@
                   onClick={() => setIsEditing(true)}
                   className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
                   style={{ backgroundColor: tailwindColors['primary-color'] }}
-                  title="Edit Post"
+                  aria-label="Edit Post"
+                  ref={editButtonRef}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                   </svg>
                 </button>
@@ -614,9 +638,9 @@
                   onClick={() => setShowDeleteModal(true)}
                   className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
                   style={{ backgroundColor: tailwindColors['secondary-color'] }}
-                  title="Delete Post"
+                  aria-label="Delete Post"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
                   </svg>
                 </button>
@@ -668,110 +692,6 @@
       );
     }
 
-    // --- Comment Form Component ---
-    function CommentForm({ postId, isAuthReady, onCancel }) {
-      const [content, setContent] = useState('');
-      const [name, setName] = useState('');
-      const [isLoading, setIsLoading] = useState(false);
-      const [errorMessage, setErrorMessage] = useState('');
-      const [successMessage, setSuccessMessage] = useState('');
-      const { isDarkMode } = useContext(ThemeContext);
-
-      const handleCommentSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setErrorMessage('');
-
-        if (!isAuthReady) {
-          setErrorMessage('Please wait for the app to connect before commenting.');
-          setIsLoading(false);
-          return;
-        }
-
-        if (!content.trim()) {
-          setErrorMessage('Please write something for your comment.');
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          const { error } = await supabaseInstance
-            .from('comments')
-            .insert({
-              content: content.trim(),
-              name: name.trim() || 'Anonymous',
-              post_id: postId,
-              timestamp: new Date().toISOString(),
-            });
-          if (error) throw error;
-          setSuccessMessage('Comment submitted!');
-          setContent('');
-          setName('');
-          setTimeout(() => {
-            setSuccessMessage('');
-            onCancel(); // Close the form after a successful post
-          }, 1500);
-        } catch (error) {
-          console.error("Error adding comment:", error);
-          setErrorMessage("Failed to submit comment. Please try again.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      return (
-        <form onSubmit={handleCommentSubmit} className="space-y-2">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows="2"
-            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-            placeholder="Add a comment..."
-            style={{
-              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-              color: isDarkMode ? 'white' : tailwindColors['text-color'],
-              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-              outlineColor: tailwindColors['primary-color'],
-            }}
-            required
-          ></textarea>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-            placeholder="Your Name (Optional)"
-            style={{
-              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-              color: isDarkMode ? 'white' : tailwindColors['text-color'],
-              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-              outlineColor: tailwindColors['primary-color'],
-            }}
-          />
-          {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
-          {successMessage && <p className="text-green-500 text-sm">{successMessage}</p>}
-          <div className="flex space-x-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-              style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-              style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Posting...' : 'Post Comment'}
-            </button>
-          </div>
-        </form>
-      );
-    }
-
     // --- Post Submission Modal Component ---
     function PostModal({ setIsModalOpen, isAuthReady, localUserId }) {
       const [content, setContent] = useState('');
@@ -783,6 +703,51 @@
       const [errorMessage, setErrorMessage] = useState('');
       const [successMessage, setSuccessMessage] = useState('');
       const { isDarkMode } = useContext(ThemeContext);
+      const modalRef = useRef(null);
+
+      // Focus the first form element when the modal is opened
+      useEffect(() => {
+        if (modalRef.current) {
+          modalRef.current.focus();
+        }
+      }, []);
+
+      // Handle keyboard events for accessibility
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') {
+            setIsModalOpen();
+          }
+        };
+
+        const handleTabKey = (e) => {
+          if (e.key === 'Tab' && modalRef.current) {
+            const focusableElements = modalRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) { // reverse tab
+              if (document.activeElement === firstElement) {
+                lastElement.focus();
+                e.preventDefault();
+              }
+            } else { // forward tab
+              if (document.activeElement === lastElement) {
+                firstElement.focus();
+                e.preventDefault();
+              }
+            }
+          }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keydown', handleTabKey);
+
+        return () => {
+          document.removeEventListener('keydown', handleKeyDown);
+          document.removeEventListener('keydown', handleTabKey);
+        };
+      }, [setIsModalOpen]);
 
       const handlePostSubmit = async (e) => {
         e.preventDefault();
@@ -836,7 +801,7 @@
           setEventDate('');
           setEventTime('');
           setTimeout(() => {
-            setIsModalOpen(false);
+            setIsModalOpen();
           }, 1500); // Close modal after success message
         } catch (error) {
           console.error("Error adding post:", error);
@@ -850,6 +815,10 @@
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
           style={{ zIndex: 1000 }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          ref={modalRef}
         >
           <div
             className={`w-full max-w-lg p-6 rounded-xl shadow-2xl relative transition-all duration-300`}
@@ -859,12 +828,13 @@
             }}
           >
             <button
-              onClick={() => setIsModalOpen(false)}
+              onClick={setIsModalOpen}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              aria-label="Close modal"
             >
               &times;
             </button>
-            <h3 className="text-2xl font-semibold mb-4 text-center">Create a New Post</h3>
+            <h3 id="modal-title" className="text-2xl font-semibold mb-4 text-center">Create a New Post</h3>
 
             <form onSubmit={handlePostSubmit}>
               <div className="mb-4">
@@ -984,7 +954,7 @@
               <div className="flex justify-end space-x-4">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={setIsModalOpen}
                   className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
                   style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
                 >
@@ -1200,9 +1170,62 @@
     // --- Confirmation Modal for Deletion ---
     function ConfirmDeleteModal({ onConfirm, onCancel }) {
       const { isDarkMode } = useContext(ThemeContext);
+      const modalRef = useRef(null);
+      const confirmButtonRef = useRef(null);
+
+      // Focus the confirm button when the modal opens
+      useEffect(() => {
+        if (confirmButtonRef.current) {
+          confirmButtonRef.current.focus();
+        }
+      }, []);
+
+      // Handle keyboard events for accessibility
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if (e.key === 'Escape') {
+            onCancel();
+          }
+        };
+
+        const handleTabKey = (e) => {
+          if (e.key === 'Tab' && modalRef.current) {
+            const focusableElements = modalRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) { // reverse tab
+              if (document.activeElement === firstElement) {
+                lastElement.focus();
+                e.preventDefault();
+              }
+            } else { // forward tab
+              if (document.activeElement === lastElement) {
+                firstElement.focus();
+                e.preventDefault();
+              }
+            }
+          }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keydown', handleTabKey);
+
+        return () => {
+          document.removeEventListener('keydown', handleKeyDown);
+          document.removeEventListener('keydown', handleTabKey);
+        };
+      }, [onCancel]);
+
 
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-modal-title"
+          ref={modalRef}
+        >
           <div
             className={`w-full max-w-sm p-6 rounded-lg shadow-xl`}
             style={{
@@ -1210,7 +1233,7 @@
               color: isDarkMode ? 'white' : tailwindColors['text-color'],
             }}
           >
-            <h4 className="text-lg font-bold mb-4">Are you sure?</h4>
+            <h4 id="confirm-modal-title" className="text-lg font-bold mb-4">Are you sure?</h4>
             <p className="mb-6">This post will be permanently deleted. This action cannot be undone.</p>
             <div className="flex justify-end space-x-4">
               <button
@@ -1224,6 +1247,7 @@
                 onClick={onConfirm}
                 className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
                 style={{ backgroundColor: tailwindColors['secondary-color'], color: 'white' }}
+                ref={confirmButtonRef}
               >
                 Delete
               </button>
