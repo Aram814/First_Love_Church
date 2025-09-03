@@ -3,280 +3,264 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Members - Women's Fellowship</title>
+  <title>Women's Fellowship - Members</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
     }
-    .profile-card {
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .profile-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    }
   </style>
 </head>
-<body>
-  <div id="root"></div>
+<body class="transition-colors duration-300">
 
-  <script type="text/babel">
-    const { useState, useEffect, createContext, useContext } = React;
-    const { createClient } = supabase;
-
-    // Define the colors and styles
-    const tailwindColors = {
-      'bg-color': '#f5f2ed',
-      'card-bg-light': '#e9e2d0',
-      'card-bg-dark': '#3a2f2f',
-      'text-color': '#2b2b2b',
-      'primary-color': '#caa72d',
-      'secondary-color': '#b83b3b',
-      'footer-color': '#045f5f',
-      'button-bg': '#b83b3b',
-      'button-hover': '#922a2a',
-      'shadow': 'rgba(0,0,0,0.1)',
-      'prayer-color': '#fbc02d',
-      'provision-color': '#d9c9b6',
-      'event-color': '#e0a399',
-      'update-color': '#045f5f',
-    };
-
-    // --- Contexts for Accessibility and UI State ---
-    const FontSizeContext = createContext();
-    const ThemeContext = createContext();
-
-    // Supabase client initialization
-    // IMPORTANT: Replace with your actual Supabase URL and key
-    const supabaseUrl = 'https://btercxzikklbkjpltoey.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc';
-    const isSupabaseConfigValid = supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
-    const supabaseInstance = isSupabaseConfigValid ? createClient(supabaseUrl, supabaseAnonKey) : null;
-
-    // Dummy member data - now with a 'type' for colored frames
-    const dummyMembers = [
-      { id: 1, name: "Erica", phone: "(352) 844-1777", email: "Grandma87654@gmail.com", extra_details: "N/A", type: 'Music'},
-      { id: 2, name: "Kathryn Kerbo", phone: "(352) 286-7843", email: "kaykaerbo@yahoo.com", extra_details: "Pet Sitting", type: 'Bible Study'},
-      { id: 3, name: "Stephanie Cunningham", phone: "(352) 320-696", email: "scunningham1234@gmail.com", extra_details: "N/A", type: 'Hospitality'},
-      { id: 4, name: "Ruth Carroll", phone: "(352) 895-3796", email: "carrollruth@gmail.com", extra_details: "N/A", type: 'Intercessory'},
-      { id: 5, name: "Barbara Fortin", phone: "(352) 425-4525", email: "rbfortin@outlook.com", extra_details: "N/A", type: 'Music'},
-      { id: 6, name: "Jennifer Thomas", phone: "(207) 249-0230", email: "jennythomas1729@gmail.com", extra_details: "Death Doula, Grief counseling/assistance, Notary", type: 'Bible Study'},
-      { id: 7, name: "Amanda Ramirez", phone: "(727) 294-2225", email: "arramirez814@gmail.com", extra_details: "Computer/Cell phone assistance", type: 'Hospitality'},
-      { id: 8, name: "Peggy Blue", phone: "(352) 454-3893", email: "bluewing747@gmail.com", extra_details: "Professional organizer/Decorating", type: 'Intercessory'},
-      { id: 9, name: "Vickie Barrett", phone: "(352) 282-3893", email: "v120@aol.com", extra_details: "N/A", type: 'Music'},
-      { id: 10, name: "Maxine Zick", phone: "(352) 727-8850", email: "zmax1654@gmail.com", extra_details: "N/A", type: 'Bible Study'},
-      { id: 11, name: "Barbara Cyrus", phone: "(352) 286-8040", email: "Barbaracyrus@icloud.com", extra_details: "N/A", type: 'Hospitality'},
-      { id: 12, name: "Heather Drake", phone: "(352) 427-7369", email: "N/A", extra_details: "N/A", type: 'Intercessory'},
-      { id: 13, name: "Sue Belshaw", phone: "(802) 567-8901", email: "carriebeth54@gmail.com", extra_details: "Peer counseling, Biblical counseling", type: 'Music'},
-    ];
-
-    // --- Main App Component ---
-    function App() {
-      const [members, setMembers] = useState(dummyMembers); // Use dummy data initially
-      const [isAuthReady, setIsAuthReady] = useState(false);
-
-      // Read initial settings from localStorage or use defaults
-      const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
-        const savedFontSize = localStorage.getItem('fontSizeMultiplier');
-        return savedFontSize ? parseFloat(savedFontSize) : 1;
-      });
-
-      const [isDarkMode, setIsDarkMode] = useState(() => {
-        const savedDarkMode = localStorage.getItem('isDarkMode');
-        return savedDarkMode === 'true';
-      });
-
-      // Handle Supabase initialization and authentication
-      useEffect(() => {
-        if (!isSupabaseConfigValid) {
-            console.error("Supabase credentials are not configured.");
-            return;
-        }
-
-        const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
-          setIsAuthReady(true);
-        });
-        
-        return () => {
-          if (authListener) {
-            authListener.subscription.unsubscribe();
-          }
-        };
-      }, []);
-
-      useEffect(() => {
-        // Fetch members from Supabase in the future
-        // For now, we'll just use the dummy data
-      }, [isAuthReady, isSupabaseConfigValid]);
-
-      useEffect(() => {
-        localStorage.setItem('isDarkMode', isDarkMode);
-      }, [isDarkMode]);
-
-      useEffect(() => {
-        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
-      }, [fontSizeMultiplier]);
-
-      const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode);
-      };
-
-      const increaseFontSize = () => {
-        setFontSizeMultiplier(prev => Math.min(prev + 0.1, 1.5));
-      };
-
-      const decreaseFontSize = () => {
-        setFontSizeMultiplier(prev => Math.max(prev - 0.1, 0.7));
-      };
-
-      return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
-          <FontSizeContext.Provider value={{ fontSizeMultiplier, increaseFontSize, decreaseFontSize }}>
-            <div
-              className={`min-h-screen ${isDarkMode ? 'dark bg-[#2b2b2b] text-white' : 'bg-[#f5f2ed] text-[#2b2b2b]'}`}
-            >
-              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
-              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
-                <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
-                    <img
-                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
-                      alt="First Love Church Logo"
-                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
-                    />
-                  </a>
-                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                    First Love Church
-                  </h1>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={increaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    A+
-                  </button>
-                  <button
-                    onClick={decreaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    A-
-                  </button>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                  >
-                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Header Row 2: Bulletin Title and Navigation Buttons */}
-              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
-                  <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                      Women's Fellowship Bulletin
-                  </h2>
-                  {/* The navigation now only has the Bulletin Board link as requested */}
-                  <div
-                    className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-4 text-sm font-semibold transition-all duration-300 transform"
-                  >
-                      <a
-                        href="https://aram814.github.io/First_Love_Church/"
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                        style={{ color: tailwindColors['text-color'] }}
-                      >
-                          Bulletin Board
-                      </a>
-                  </div>
-              </div>
-
-              {/* Main Content Area - Members Gallery */}
-              <main className="p-4 md:p-6 max-w-4xl mx-auto">
-                <h2 id="members-section" className="text-2xl font-bold mb-6 text-center">Fellowship Members</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {members.map(member => (
-                    <MemberCard
-                      key={member.id}
-                      member={member}
-                      isDarkMode={isDarkMode}
-                      fontSizeMultiplier={fontSizeMultiplier}
-                    />
-                  ))}
-                </div>
-              </main>
-
-              {/* Footer */}
-              <footer className="w-full text-center p-4 mt-8" style={{ backgroundColor: tailwindColors['footer-color'], color: 'white' }}>
-                <p className="text-sm">&copy; 2025 Women's Fellowship.</p>
-                <p className="text-sm">&copy; 2000 First Love Church. All rights reserved.</p>
-              </footer>
-            </div>
-          </FontSizeContext.Provider>
-        </ThemeContext.Provider>
-      );
-    }
-
-    // New helper function to get card color based on type
-    const getCardColor = (type) => {
-      switch (type) {
-        case 'Leadership':
-          return tailwindColors['prayer-color'];
-        case 'Music':
-          return tailwindColors['provision-color'];
-        case 'Bible Study':
-          return tailwindColors['event-color'];
-        case 'Hospitality':
-          return tailwindColors['secondary-color'];
-        case 'Intercessory':
-          return tailwindColors['update-color'];
-        default:
-          return tailwindColors['text-color'];
-      }
-    };
-
-    function MemberCard({ member, isDarkMode, fontSizeMultiplier }) {
-      const cardBg = isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'];
-      const textColor = isDarkMode ? 'white' : tailwindColors['text-color'];
-      const borderColor = getCardColor(member.type);
-      
-      return (
-        <div
-          className="profile-card p-4 rounded-lg shadow-md flex flex-col items-center text-center space-y-3"
-          style={{
-            backgroundColor: cardBg,
-            color: textColor,
-            fontSize: `${1 * fontSizeMultiplier}rem`,
-            borderColor: borderColor,
-            borderWidth: '2px',
-          }}
+  <!-- Header Section -->
+  <div id="header" class="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md transition-colors duration-300">
+    <div class="flex items-center space-x-4 mb-4 md:mb-0">
+      <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+        <img
+          src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+          alt="First Love Church Logo"
+          class="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+        />
+      </a>
+      <h1 id="main-heading" class="text-2xl md:text-3xl font-bold transition-colors duration-300">
+        First Love Church
+      </h1>
+    </div>
+    <div class="flex space-x-2">
+        <button
+          id="increase-font"
+          aria-label="Increase font size"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
         >
-          {/* Removed the photo placeholder as requested */}
-          <h3 className="text-xl font-semibold">{member.name}</h3>
-          <div className="w-full text-left space-y-2 text-sm pt-2"
-            style={{
-              borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-            }}
-          >
-            <p><span className="font-semibold">Phone:</span> {member.phone}</p>
-            <p><span className="font-semibold">Email:</span> {member.email}</p>
-            <p><span className="font-semibold">Details:</span> {member.extra_details}</p>
-          </div>
-        </div>
-      );
-    }
-    
-    ReactDOM.render(<App />, document.getElementById('root'));
+          A+
+        </button>
+        <button
+          id="decrease-font"
+          aria-label="Decrease font size"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
+        >
+          A-
+        </button>
+        <button
+          id="toggle-theme"
+          aria-label="Toggle light and dark mode"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
+        >
+          Dark Mode
+        </button>
+      </div>
+  </div>
+
+  <main class="p-4 md:p-6 max-w-4xl mx-auto">
+    <h2 id="members-heading" class="text-xl md:text-2xl font-bold text-center transition-colors duration-300 mb-8">
+      Women's Fellowship Members
+    </h2>
+    <p class="text-lg text-center mb-8">This page contains a list of active members and their contact information. Please remember to respect each other's privacy.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <!-- Member Profile Card - Sue Belshaw -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Sue Belshaw</h3>
+        <p class="text-sm italic mb-2">Peer counseling, Biblical counseling</p>
+        <p class="mb-2"><strong>Phone:</strong> (802) 567-8901</p>
+        <p class="mb-4"><strong>Email:</strong> carriebeth54@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Erica -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-2">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Erica</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 844-1777</p>
+        <p class="mb-4"><strong>Email:</strong> Grandma87654@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Kathryn Kerbo -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-3">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Kathryn Kerbo</h3>
+        <p class="text-sm italic mb-2">Pet Sitting</p>
+        <p class="mb-2"><strong>Phone:</strong> (352) 286-7843</p>
+        <p class="mb-4"><strong>Email:</strong> kaykaerbo@yahoo.com</p>
+      </div>
+      
+      <!-- Member Profile Card - Stephanie Cunningham -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-4">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Stephanie Cunningham</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 320-696</p>
+        <p class="mb-4"><strong>Email:</strong> scunningham1234@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Ruth Carroll -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-5">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Ruth Carroll</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 895-3796</p>
+        <p class="mb-4"><strong>Email:</strong> carrollruth@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Barbara Fortin -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-6">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Barbara Fortin</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 425-4525</p>
+        <p class="mb-4"><strong>Email:</strong> rbfortin@outlook.com</p>
+      </div>
+
+      <!-- Member Profile Card - Jennifer Thomas -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-7">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Jennifer Thomas</h3>
+        <p class="text-sm italic mb-2">Death Doula, Grief counseling/assistance, Notary</p>
+        <p class="mb-2"><strong>Phone:</strong> (207) 249-0230</p>
+        <p class="mb-4"><strong>Email:</strong> jennythomas1729@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Amanda Ramirez -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-8">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Amanda Ramirez</h3>
+        <p class="text-sm italic mb-2">Computer/Cell phone assistance</p>
+        <p class="mb-2"><strong>Phone:</strong> (727) 294-2225</p>
+        <p class="mb-4"><strong>Email:</strong> arramirez814@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Peggy Blue -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-9">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Peggy Blue</h3>
+        <p class="text-sm italic mb-2">Professional organizer/Decorating</p>
+        <p class="mb-2"><strong>Phone:</strong> (352) 454-3893</p>
+        <p class="mb-4"><strong>Email:</strong> bluewing747@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Vickie Barrett -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-10">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Vickie Barrett</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 282-3893</p>
+        <p class="mb-4"><strong>Email:</strong> v120@aol.com</p>
+      </div>
+
+      <!-- Member Profile Card - Maxine Zick -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-11">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Maxine Zick</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 727-8850</p>
+        <p class="mb-4"><strong>Email:</strong> zmax1654@gmail.com</p>
+      </div>
+
+      <!-- Member Profile Card - Barbara Cyrus -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-12">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Barbara Cyrus</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 286-8040</p>
+        <p class="mb-4"><strong>Email:</strong> Barbaracyrus@icloud.com</p>
+      </div>
+
+      <!-- Member Profile Card - Heather Drake -->
+      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-13">
+        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Heather Drake</h3>
+        <p class="mb-2"><strong>Phone:</strong> (352) 427-7369</p>
+        <p class="mb-4"><strong>Email:</strong></p>
+      </div>
+
+    </div>
+
+    <!-- Back button -->
+    <a href="index.html" class="mt-8 block w-full md:w-auto text-center py-2 px-4 rounded-lg font-semibold transition-transform duration-200 hover:scale-105" style="background-color: #caa72d; color: #2b2b2b;">
+      &larr; Back to Bulletin Board
+    </a>
+
+  </main>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      const header = document.getElementById('header');
+      const mainHeading = document.getElementById('main-heading');
+      const membersHeading = document.getElementById('members-heading');
+      const memberCards = document.querySelectorAll('[id^="member-card"]');
+      const toggleThemeBtn = document.getElementById('toggle-theme');
+      const increaseFontBtn = document.getElementById('increase-font');
+      const decreaseFontBtn = document.getElementById('decrease-font');
+
+      const colors = {
+        light: {
+          bg: '#f5f2ed',
+          text: '#2b2b2b',
+          cardBg: '#e9e2d0',
+          primary: '#caa72d',
+          secondary: '#b83b3b',
+          btnBg: '#b83b3b',
+          btnText: '#ffffff'
+        },
+        dark: {
+          bg: '#1E1E1E',
+          text: '#ffffff',
+          cardBg: '#3a2f2f',
+          primary: '#caa72d',
+          secondary: '#b83b3b',
+          btnBg: '#caa72d',
+          btnText: '#ffffff'
+        }
+      };
+
+      const applyTheme = (isDark) => {
+        const theme = isDark ? colors.dark : colors.light;
+
+        // Apply colors to body and header background
+        body.style.backgroundColor = theme.bg;
+        header.style.backgroundColor = theme.bg;
+        
+        // Apply colors to text and heading
+        body.style.color = theme.text;
+        mainHeading.style.color = theme.text;
+        membersHeading.style.color = theme.text;
+
+        // Apply colors to the content cards
+        memberCards.forEach(card => {
+          card.style.backgroundColor = theme.cardBg;
+        });
+
+        // Apply colors to buttons
+        toggleThemeBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        toggleThemeBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+        increaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        increaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+        decreaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        decreaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+
+        toggleThemeBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        localStorage.setItem('isDarkMode', isDark);
+      };
+
+      const savedTheme = localStorage.getItem('isDarkMode');
+      const isDarkMode = savedTheme === 'true';
+      applyTheme(isDarkMode);
+
+      toggleThemeBtn.addEventListener('click', () => {
+        let currentThemeIsDark = localStorage.getItem('isDarkMode') === 'true';
+        currentThemeIsDark = !currentThemeIsDark;
+        applyTheme(currentThemeIsDark);
+      });
+
+      // Font size
+      const applyFontSize = (sizeMultiplier) => {
+        document.querySelectorAll('main p, main li, main a, main em, main strong, h2, h3, h4').forEach(el => {
+          el.style.fontSize = `${1 * sizeMultiplier}rem`;
+        });
+      };
+
+      let fontSizeMultiplier = parseFloat(localStorage.getItem('fontSizeMultiplier')) || 1.0;
+      applyFontSize(fontSizeMultiplier);
+
+      increaseFontBtn.addEventListener('click', () => {
+        fontSizeMultiplier = Math.min(fontSizeMultiplier + 0.1, 1.5);
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+        applyFontSize(fontSizeMultiplier);
+      });
+
+      decreaseFontBtn.addEventListener('click', () => {
+        fontSizeMultiplier = Math.max(fontSizeMultiplier - 0.1, 0.7);
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+        applyFontSize(fontSizeMultiplier);
+      });
+    });
   </script>
 </body>
 </html>
