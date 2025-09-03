@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Women's Fellowship - Meeting Summaries</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="transition-colors duration-300">
+
+  <!-- Header Section - Similar to the main page -->
+  <div id="header" class="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md transition-colors duration-300">
+    <div class="flex items-center space-x-4 mb-4 md:mb-0">
+      <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+        <img
+          src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+          alt="First Love Church Logo"
+          class="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+        />
+      </a>
+      <h1 id="main-heading" class="text-2xl md:text-3xl font-bold transition-colors duration-300">
+        First Love Church
+      </h1>
+    </div>
+    <div class="flex space-x-2">
+        <button
+          id="increase-font"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
+        >
+          A+
+        </button>
+        <button
+          id="decrease-font"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
+        >
+          A-
+        </button>
+        <button
+          id="toggle-theme"
+          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
+        >
+          Dark Mode
+        </button>
+      </div>
+  </div>
+
+  <main class="p-4 md:p-6 max-w-4xl mx-auto">
+    <h2 id="summary-heading" class="text-xl md:text-2xl font-bold transition-colors duration-300">
+      Meeting Summaries
+    </h2>
+    <p class="text-lg text-center mb-8">This page contains summaries of our past Women's Fellowship meetings. Please read to catch up on what you may have missed.</p>
+
+    <div class="space-y-6">
+      <!-- Summary for August 2024 -->
+      <div id="summary-card" class="p-6 rounded-xl shadow-md transition-colors duration-300">
+        <h3 class="text-2xl font-semibold mb-2 text-[#b83b3b]">August 2024: First Meeting!</h3>
+        <p class="text-sm italic mb-4">Meeting held on August 23, 2024</p>
+        
+        <h4 class="text-lg font-semibold mb-2">Events to Look for Soon!</h4>
+        <ul class="list-disc list-inside space-y-1 mb-4">
+          <li>Field trip to Appleton Museum near Christmas time</li>
+          <li>Sunrise/sunset trip from coast to coast</li>
+          <li>Game Night!</li>
+        </ul>
+        
+        <h4 class="text-lg font-semibold mb-2">Group Ideas/Suggestions:</h4>
+        <ul class="list-disc list-inside space-y-1 mb-4">
+          <li>Church Cleaning Crew (once every 8-12 weeks)</li>
+          <li>Prayer Group - <strong>Prayer Requests added to main page of site!</strong></li>
+          <li>Bible Study - <em>Let us know what days/times are convenient and any topics of interest</em></li>
+          <li>Refreshments for monthly meetings - Please comment on upcoming event you can assist with</li>
+          <li>Outdoor Work Days - gardening, upkeep/care of plants and grounds</li>
+          <li>Church Info Communications - Look to the main bulletin page for any updates!</li>
+        </ul>
+
+        <h4 class="text-lg font-semibold mb-2">Prayer Warriors!</h4>
+        <p class="mb-4">
+          Pray regularly for the chruch, the Drakes, the outreach, and needs that up come up!
+        </p>
+
+        <p>Please reach out to Sue (contact info can be found on the <a href="Members.html" class="font-bold text-[#b83b3b] dark:text-[#b83b3b] hover:underline transition-transform duration-200 hover:scale-105">Members</a> page) if you are interested in any of the topics or have more ideas to add!</p>
+      </div>
+    </div>
+
+    <!-- Back button -->
+    <a href="index.html" class="mt-8 block w-full md:w-auto text-center py-2 px-4 rounded-lg font-semibold transition-transform duration-200 hover:scale-105" style="background-color: #caa72d; color: #2b2b2b;">
+      &larr; Back to Bulletin Board
+    </a>
+
+  </main>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const html = document.documentElement;
+      const body = document.body;
+      const header = document.getElementById('header');
+      const mainHeading = document.getElementById('main-heading');
+      const summaryHeading = document.getElementById('summary-heading');
+      const summaryCard = document.getElementById('summary-card');
+      const toggleThemeBtn = document.getElementById('toggle-theme');
+      const increaseFontBtn = document.getElementById('increase-font');
+      const decreaseFontBtn = document.getElementById('decrease-font');
+
+      const colors = {
+        light: {
+          bg: '#f5f2ed',
+          text: '#2b2b2b',
+          cardBg: '#e9e2d0',
+          primary: '#caa72d',
+          secondary: '#b83b3b',
+          btnBg: '#b83b3b',
+          btnText: '#ffffff'
+        },
+        dark: {
+          bg: '#1E1E1E',
+          text: '#ffffff',
+          cardBg: '#3a2f2f',
+          primary: '#caa72d',
+          secondary: '#b83b3b',
+          btnBg: '#caa72d',
+          btnText: '#ffffff'
+        }
+      };
+
+      const applyTheme = (isDark) => {
+        const theme = isDark ? colors.dark : colors.light;
+
+        // Apply colors to body and header background
+        body.style.backgroundColor = theme.bg;
+        header.style.backgroundColor = theme.bg;
+        
+        // Apply colors to text and heading
+        body.style.color = theme.text;
+        mainHeading.style.color = theme.text;
+        summaryHeading.style.color = theme.text;
+
+        // Apply colors to the content card
+        summaryCard.style.backgroundColor = theme.cardBg;
+        
+        // Apply colors to buttons
+        toggleThemeBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        toggleThemeBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+        increaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        increaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+        decreaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
+        decreaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+
+        toggleThemeBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        localStorage.setItem('isDarkMode', isDark);
+      };
+
+      const savedTheme = localStorage.getItem('isDarkMode');
+      const isDarkMode = savedTheme === 'true';
+      applyTheme(isDarkMode);
+
+      toggleThemeBtn.addEventListener('click', () => {
+        let currentThemeIsDark = localStorage.getItem('isDarkMode') === 'true';
+        currentThemeIsDark = !currentThemeIsDark;
+        applyTheme(currentThemeIsDark);
+      });
+
+      // Font size
+      const applyFontSize = (sizeMultiplier) => {
+        document.querySelectorAll('main p, main li, main a, main em, main strong, h2, h3, h4').forEach(el => {
+          el.style.fontSize = `${1 * sizeMultiplier}rem`;
+        });
+      };
+
+      let fontSizeMultiplier = parseFloat(localStorage.getItem('fontSizeMultiplier')) || 1.0;
+      applyFontSize(fontSizeMultiplier);
+
+      increaseFontBtn.addEventListener('click', () => {
+        fontSizeMultiplier = Math.min(fontSizeMultiplier + 0.1, 1.5);
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+        applyFontSize(fontSizeMultiplier);
+      });
+
+      decreaseFontBtn.addEventListener('click', () => {
+        fontSizeMultiplier = Math.max(fontSizeMultiplier - 0.1, 0.7);
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+        applyFontSize(fontSizeMultiplier);
+      });
+    });
+  </script>
+</body>
+</html>
