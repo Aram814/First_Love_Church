@@ -11,28 +11,10 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
-    }
-    .light-paper-bg {
-      background-color: #f0e9d8;
-      background-image: repeating-conic-gradient(
-        from 0deg,
-        rgba(0,0,0,0.05) 0% 0.1%,
-        transparent 0.1% 10%
-      );
-      background-size: 20px 20px;
-    }
-    .dark-paper-bg {
-      background-color: #1a1a1a;
-      background-image: repeating-conic-gradient(
-        from 0deg,
-        rgba(255,255,255,0.05) 0% 0.1%,
-        transparent 0.1% 10%
-      );
-      background-size: 20px 20px;
     }
   </style>
 </head>
@@ -40,14 +22,14 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, createContext, useContext, useRef } = React;
+    const { useState, useEffect, createContext, useContext } = React;
     const { createClient } = supabase;
 
     // Define the colors and styles
     const tailwindColors = {
-      'bg-color': '#f0e9d8',
+      'bg-color': '#f5f2ed',
       'card-bg-light': '#e9e2d0',
-      'card-bg-dark': '#2c2c2c',
+      'card-bg-dark': '#3a2f2f',
       'text-color': '#2b2b2b',
       'primary-color': '#caa72d',
       'secondary-color': '#b83b3b',
@@ -58,6 +40,7 @@
       'prayer-color': '#fbc02d',
       'provision-color': '#d9c9b6',
       'event-color': '#e0a399',
+      'cleanup-color':'#caa79d',
       'update-color': '#045f5f',
     };
 
@@ -73,23 +56,649 @@
     // Create Supabase instance only if the configuration is valid
     const isSupabaseConfigValid = supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseAnonKey !== 'YOUR_SUPABASE_ANON_KEY';
     const supabaseInstance = isSupabaseConfigValid ? createClient(supabaseUrl, supabaseAnonKey) : null;
-    
+
+    // --- Main App Component ---
+    function App() {
+      const [posts, setPosts] = useState([]);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [isAuthReady, setIsAuthReady] = useState(false);
+      const [localUserId, setLocalUserId] = useState(null);
+      // New state to manage the mobile menu's open/closed state
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+      // Read initial settings from localStorage or use defaults
+      const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
+        const savedFontSize = localStorage.getItem('fontSizeMultiplier');
+        return savedFontSize ? parseFloat(savedFontSize) : 1;
+      });
+
+      const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedDarkMode = localStorage.getItem('isDarkMode');
+        return savedDarkMode === 'true'; // localStorage saves as a string
+      });
+
+      // Handle Supabase initialization and authentication
+      useEffect(() => {
+        if (!isSupabaseConfigValid) {
+            console.error("Supabase credentials are not configured. Please update the placeholders.");
+            return;
+        }
+
+        // Generate a unique user ID and store it in local storage.
+        // This is a simple way to track likes without a full auth system.
+        let id = localStorage.getItem('local_user_id');
+        if (!id) {
+            id = crypto.randomUUID();
+            localStorage.setItem('local_user_id', id);
+        }
+        setLocalUserId(id);
+        
+        // This listener is still useful for potential future authentication
+        const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
+          // You could use session.user.id here if you enable full auth later
+          setIsAuthReady(true);
+        });
+        
+        // Remove listener on cleanup
+        return () => {
+          if (authListener) {
+            authListener.subscription.unsubscribe();
+          }
+        };
+      }, []);
+
+      // Set up the real-time listener for posts
+      useEffect(() => {
+        // Check if auth is ready and config is valid before trying to fetch data
+        if (isAuthReady && isSupabaseConfigValid) {
+          const fetchPosts = async () => {
+            try {
+              const { data, error } = await supabaseInstance
+                .from('posts')
+                .select('*')
+                .order('timestamp', { ascending: false });
+              if (error) throw error;
+              setPosts(data);
+            } catch (error) {
+              console.error("Error fetching posts:", error);
+            }
+          };
+
+          const channel = supabaseInstance.channel('posts-channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, payload => {
+              fetchPosts();
+            })
+            .subscribe();
+
+          fetchPosts();
+
+          return () => {
+            supabaseInstance.removeChannel(channel);
+          };
+        }
+      }, [isAuthReady, isSupabaseConfigValid]);
+
+      useEffect(() => {
+        localStorage.setItem('isDarkMode', isDarkMode);
+      }, [isDarkMode]);
+
+      useEffect(() => {
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+      }, [fontSizeMultiplier]);
+
+      const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+      };
+
+      const increaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.min(prev + 0.1, 1.5));
+      };
+
+      const decreaseFontSize = () => {
+        setFontSizeMultiplier(prev => Math.max(prev - 0.1, 0.7));
+      };
+
+      const scrollToSection = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+          setIsMenuOpen(false); // Close menu after a link is clicked
+        }
+      };
+      
+      const toggleMenu = () => {
+          setIsMenuOpen(!isMenuOpen);
+      };
+
+      // Conditionally render based on Supabase configuration
+      if (!isSupabaseConfigValid) {
+          return (
+              <div className="min-h-screen flex items-center justify-center p-4 text-center bg-gray-100">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
+                      <strong className="font-bold">Configuration Error!</strong>
+                      <span className="block sm:inline mt-2">
+                          Please replace the placeholder values 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' in the code with your actual Supabase project credentials.
+                      </span>
+                  </div>
+              </div>
+          );
+      }
+
+      // Filter posts into categories
+      const prayerRequests = posts.filter(p => p.type === 'Prayer Request');
+      const provisionsNeeded = posts.filter(p => p.type === 'Provisions Needed');
+      const events = posts.filter(p => p.type === 'Event');
+      const updates = posts.filter(p => p.type === 'Update');
+      const cleanup = posts.filter(p => p.type === 'Clean Up Crew');
+
+      return (
+        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+          <FontSizeContext.Provider value={{ fontSizeMultiplier, increaseFontSize, decreaseFontSize }}>
+            <div
+              className={`min-h-screen ${isDarkMode ? 'dark bg-[#2b2b2b] text-white' : 'bg-[#f5f2ed] text-[#2b2b2b]'}`}
+            >
+              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
+              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
+                <div className="flex items-center space-x-4 mb-4 md:mb-0">
+                  {/* The logo is now a clickable link */}
+                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+                    <img
+                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
+                      alt="First Love Church Logo"
+                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+                    />
+                  </a>
+                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                    First Love Church
+                  </h1>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={increaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A+
+                  </button>
+                  <button
+                    onClick={decreaseFontSize}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    A-
+                  </button>
+                  <button
+                    onClick={toggleDarkMode}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+                  >
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Header Row 2: Bulletin Title and Navigation Button */}
+              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
+                {/* The main title on the left */}
+                <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
+                  Women's Fellowship Bulletin
+                </h2>
+
+                {/* Single Menu Button and Conditional Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={toggleMenu}
+                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 flex items-center"
+                    style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  >
+                    MENU
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-2 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  {isMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-10 flex flex-col items-end space-y-2 p-4" style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'], color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>
+                      <button
+                        onClick={() => scrollToSection('updates-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Updates
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('events-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Events
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('cleanup-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Clean Up Crew
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('prayer-requests-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Prayer Requests
+                      </button>
+                      <button
+                        onClick={() => scrollToSection('provisions-needed-section')}
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Provisions
+                      </button>
+                      <a
+                        href="MeetingSummaries.html"
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Meeting Summaries
+                      </a>
+                      <a
+                        href="Members.html"
+                        className="hover:underline transition-transform duration-200 hover:scale-105"
+                      >
+                        Members
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Post an Update Button - Centered below the headers */}
+              <div className="flex justify-center p-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="p-2 md:p-3 rounded-lg text-sm md:text-base font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                >
+                  Add a Post
+                </button>
+              </div>
+
+              {/* Main Content Area - Posts Feed */}
+              <main className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-8">
+                <div className="col-span-1">
+                  <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
+                  <div className="space-y-4">
+                    {updates.length > 0 ? (
+                      updates.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No updates yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="events-section" className="text-xl font-semibold mb-4 text-center">Events</h2>
+                  <div className="space-y-4">
+                    {events.length > 0 ? (
+                      events.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No events scheduled at this time.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="cleanup-section" className="text-xl font-semibold mb-4 text-center">Clean Up Crew</h2>
+                  <div className="space-y-4">
+                    {cleanup.length > 0 ? (
+                      cleanup.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No one signed up at this time.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="prayer-requests-section" className="text-xl font-semibold mb-4 text-center">Prayer Requests</h2>
+                  <div className="space-y-4">
+                    {prayerRequests.length > 0 ? (
+                      prayerRequests.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No prayer requests at this time.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-span-1">
+                  <h2 id="provisions-needed-section" className="text-xl font-semibold mb-4 text-center">Provisions Needed</h2>
+                  <div className="space-y-4">
+                    {provisionsNeeded.length > 0 ? (
+                      provisionsNeeded.map(post => (
+                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 italic">No provisions needed at this time.</div>
+                    )}
+                  </div>
+                </div>
+              </main>
+
+              {/* Footer */}
+              <footer className="w-full text-center p-4 mt-8" style={{ backgroundColor: tailwindColors['footer-color'], color: 'white' }}>
+                <p className="text-sm">&copy; 2025 Women's Fellowship.</p>
+                <p className="text-sm">&copy; 2000 First Love Church. All rights reserved.</p>
+              </footer>
+
+              {/* Post Submission Modal */}
+              {isModalOpen && (
+                <PostModal setIsModalOpen={setIsModalOpen} isAuthReady={isAuthReady} localUserId={localUserId} />
+              )}
+            </div>
+          </FontSizeContext.Provider>
+        </ThemeContext.Provider>
+      );
+    }
+
+    // --- Post Card Component ---
+    function PostCard({ post, localUserId, isAuthReady }) {
+      const { fontSizeMultiplier } = useContext(FontSizeContext);
+      const { isDarkMode } = useContext(ThemeContext);
+      const [showComments, setShowComments] = useState(false);
+      const [showCommentForm, setShowCommentForm] = useState(false); // New state to control form visibility
+      const [comments, setComments] = useState([]);
+      const [isEditing, setIsEditing] = useState(false);
+      const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+      // Live listener for comments on this specific post
+      useEffect(() => {
+        if (isAuthReady && isSupabaseConfigValid && post.id) {
+          const fetchComments = async () => {
+            const { data, error } = await supabaseInstance
+              .from('comments')
+              .select('*')
+              .eq('post_id', post.id)
+              .order('timestamp');
+            if (error) {
+              console.error("Error fetching comments:", error);
+            } else {
+              setComments(data);
+            }
+          };
+
+          const channel = supabaseInstance.channel(`comments-${post.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, payload => {
+              fetchComments();
+            })
+            .subscribe();
+
+          fetchComments();
+
+          return () => {
+            supabaseInstance.removeChannel(channel);
+          };
+        }
+      }, [isAuthReady, isSupabaseConfigValid, post.id]);
+
+      // Function to handle liking a post
+      const handleLike = async () => {
+        // The like button requires a unique ID to function properly.
+        // It's using the locally-generated UUID instead of a Supabase user ID.
+        if (!localUserId || !isSupabaseConfigValid) {
+          // This happens if the local ID isn't set, which shouldn't happen with the new code
+          console.error("User not authenticated or Supabase not configured to like post.");
+          return;
+        }
+
+        try {
+          // Fetch the current post to get the likedBy array
+          const { data: postData, error: fetchError } = await supabaseInstance
+            .from('posts')
+            .select('likes, likedBy')
+            .eq('id', post.id)
+            .single();
+
+          if (fetchError) throw fetchError;
+
+          const likedBy = postData.likedBy || [];
+          // Check if the current user has already liked this post
+          const hasLiked = likedBy.includes(localUserId);
+
+          let newLikes = postData.likes;
+          let newLikedBy = [...likedBy];
+
+          if (hasLiked) {
+            // User wants to unlike
+            newLikes = Math.max(0, newLikes - 1); // Prevent negative likes
+            newLikedBy = newLikedBy.filter(id => id !== localUserId);
+          } else {
+            // User wants to like
+            newLikes = newLikes + 1;
+            newLikedBy.push(localUserId);
+          }
+
+          const { error: updateError } = await supabaseInstance
+            .from('posts')
+            .update({
+              likes: newLikes,
+              likedBy: newLikedBy
+            })
+            .eq('id', post.id);
+
+          if (updateError) throw updateError;
+        } catch (error) {
+          console.error("Error liking/unliking post:", error);
+        }
+      };
+
+      const handleDelete = async () => {
+        try {
+          // Delete comments first to avoid foreign key constraints
+          const { error: commentError } = await supabaseInstance
+            .from('comments')
+            .delete()
+            .eq('post_id', post.id);
+          if (commentError) throw commentError;
+
+          // Then delete the post itself
+          const { error: postError } = await supabaseInstance
+            .from('posts')
+            .delete()
+            .eq('id', post.id);
+          if (postError) throw postError;
+          console.log("Post deleted successfully.");
+        } catch (error) {
+          console.error("Error deleting post:", error);
+        } finally {
+          setShowDeleteModal(false);
+        }
+      };
+
+      const getCardColor = (type) => {
+        switch (type) {
+          case 'Prayer Request':
+            return tailwindColors['prayer-color'];
+            case 'Clean Up Crew':
+            return tailwindColors['cleanup-color'];
+          case 'Provisions Needed':
+            return tailwindColors['provision-color'];
+          case 'Event':
+            return tailwindColors['event-color'];
+          case 'Update':
+          default:
+            return tailwindColors['update-color'];
+        }
+      };
+      
+      const getEventDateColor = () => {
+          return isDarkMode ? 'white' : tailwindColors['secondary-color'];
+      };
+
+      const name = post.name || 'Anonymous';
+      const postType = post.type || 'Update';
+      const likesCount = post.likes || 0;
+      const hasLiked = post.likedBy?.includes(localUserId);
+      const isPostOwner = post.user_id === localUserId;
+      
+      // Separate rendering for the event date/time
+      const renderEventDetails = () => {
+          if (post.type === 'Event' && post.event_date && post.event_time) {
+              const formattedDate = new Date(post.event_date).toLocaleDateString();
+              const formattedTime = new Date(`1970-01-01T${post.event_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return (
+                  <span className="ml-2 text-sm font-medium" style={{ color: getEventDateColor() }}>
+                      Event Date: {formattedDate} at {formattedTime}
+                  </span>
+              );
+          }
+          return null;
+      };
+
+      // New function to render the post creator and timestamp
+      const renderPostInfo = () => {
+          const date = new Date(post.timestamp);
+          const formattedDate = date.toLocaleDateString();
+          const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return `Posted by ${post.name || 'Anonymous'} on ${formattedDate} at ${formattedTime}`;
+      };
+
+      if (isEditing) {
+        return (
+          <EditPostForm post={post} setIsEditing={setIsEditing} />
+        );
+      }
+
+      return (
+        <div
+          className="p-4 rounded-lg shadow-md transition-all duration-300 relative"
+          style={{
+            backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
+            borderColor: getCardColor(postType),
+            borderWidth: '2px',
+            fontSize: `${1 * fontSizeMultiplier}rem`,
+          }}
+        >
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center space-x-2">
+              <span
+                className="text-xs font-bold rounded-full py-1 px-3"
+                style={{
+                  backgroundColor: getCardColor(postType),
+                  color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                }}
+              >
+                {postType}
+              </span>
+              {renderEventDetails()}
+            </div>
+            <span className="text-xs italic" style={{ color: isDarkMode ? 'white' : '#555' }}>
+              {renderPostInfo()}
+            </span>
+          </div>
+          <p style={{ color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>{post.content}</p>
+
+          {/* Action buttons (Like & Comment) and Edit/Delete buttons */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleLike}
+                className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: hasLiked ? tailwindColors['primary-color'] : tailwindColors['button-bg'], color: 'white' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                </svg>
+                <span>Like ({likesCount})</span>
+              </button>
+              <button
+                onClick={() => setShowComments(!showComments)}
+                className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.138C2.462 12.118 2 10.113 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clipRule="evenodd" />
+                </svg>
+                <span>Comments ({comments.length})</span>
+              </button>
+            </div>
+            {isPostOwner && (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
+                  style={{ backgroundColor: tailwindColors['primary-color'] }}
+                  title="Edit Post"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
+                  style={{ backgroundColor: tailwindColors['secondary-color'] }}
+                  title="Delete Post"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Comments section */}
+          {showComments && (
+            <div className="mt-4 border-t pt-4" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}>
+              <div className="mt-4 space-y-2">
+                {comments.length > 0 ? (
+                  comments.map(comment => (
+                    <div key={comment.id} className="p-3 rounded-lg" style={{ backgroundColor: isDarkMode ? '#4a4a4a' : 'rgba(0,0,0,0.05)' }}>
+                      <p className="text-sm font-semibold" style={{ color: isDarkMode ? 'white' : '#555' }}>
+                        {comment.name || 'Anonymous'}:
+                      </p>
+                      <p className="text-sm" style={{ color: isDarkMode ? '#e0e0e0' : tailwindColors['text-color'] }}>
+                        {comment.content}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center italic text-sm text-gray-500">No comments yet. Be the first!</p>
+                )}
+              </div>
+              <div className="mt-4">
+                {!showCommentForm && (
+                  <button
+                    onClick={() => setShowCommentForm(true)}
+                    className="w-full p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                    style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  >
+                    Post Comment
+                  </button>
+                )}
+                {showCommentForm && <CommentForm postId={post.id} isAuthReady={isAuthReady} onCancel={() => setShowCommentForm(false)} />}
+              </div>
+            </div>
+          )}
+
+          {showDeleteModal && (
+            <ConfirmDeleteModal
+              onConfirm={handleDelete}
+              onCancel={() => setShowDeleteModal(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
     // --- Comment Form Component ---
-    function CommentForm({ postId, isAuthReady, onCancel, localUserId }) {
+    function CommentForm({ postId, isAuthReady, onCancel }) {
       const [content, setContent] = useState('');
       const [name, setName] = useState('');
       const [isLoading, setIsLoading] = useState(false);
       const [errorMessage, setErrorMessage] = useState('');
       const [successMessage, setSuccessMessage] = useState('');
       const { isDarkMode } = useContext(ThemeContext);
-      const contentRef = useRef(null);
-
-      // Focus the text area when the form appears
-      useEffect(() => {
-        if (contentRef.current) {
-          contentRef.current.focus();
-        }
-      }, []);
 
       const handleCommentSubmit = async (e) => {
         e.preventDefault();
@@ -103,7 +712,7 @@
         }
 
         if (!content.trim()) {
-          setErrorMessage('Please write a comment.');
+          setErrorMessage('Please write something for your comment.');
           setIsLoading(false);
           return;
         }
@@ -112,20 +721,18 @@
           const { error } = await supabaseInstance
             .from('comments')
             .insert({
-              post_id: postId,
               content: content.trim(),
               name: name.trim() || 'Anonymous',
+              post_id: postId,
               timestamp: new Date().toISOString(),
-              // NOTE: This is the field that must exist in your Supabase 'comments' table schema
-              // If it doesn't, you will get the "Could not find the 'user_id' column" error.
-              user_id: localUserId, // Now saving the user ID with the comment
             });
           if (error) throw error;
           setSuccessMessage('Comment submitted!');
           setContent('');
           setName('');
           setTimeout(() => {
-            onCancel(); // Close the form after success
+            setSuccessMessage('');
+            onCancel(); // Close the form after a successful post
           }, 1500);
         } catch (error) {
           console.error("Error adding comment:", error);
@@ -136,153 +743,286 @@
       };
 
       return (
-        <form onSubmit={handleCommentSubmit} className="mt-4 p-4 rounded-lg" style={{ backgroundColor: isDarkMode ? '#4a4a4a' : 'rgba(0,0,0,0.05)' }}>
-          <div className="mb-2">
-            <label className="block text-sm font-medium mb-1" htmlFor="commentContent">
-              Your Comment
-            </label>
-            <textarea
-              id="commentContent"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows="2"
-              className="w-full p-2 rounded-lg text-sm border focus:ring focus:ring-opacity50"
-              style={{
-                backgroundColor: isDarkMode ? '#5a5a5a' : 'white',
-                color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                outlineColor: tailwindColors['primary-color'],
-              }}
-              required
-              ref={contentRef}
-            ></textarea>
-          </div>
-          <div className="mb-2">
-            <label className="block text-sm font-medium mb-1" htmlFor="commentName">
-              Your Name (Optional)
-            </label>
-            <input
-              id="commentName"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 rounded-lg text-sm border focus:ring focus:ring-opacity50"
-              placeholder="Your Name"
-              style={{
-                backgroundColor: isDarkMode ? '#5a5a5a' : 'white',
-                color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                outlineColor: tailwindColors['primary-color'],
-              }}
-            />
-          </div>
-          {errorMessage && <p className="text-red-500 text-sm mb-2">{errorMessage}</p>}
-          {successMessage && <p className="text-green-500 text-sm mb-2">{successMessage}</p>}
-          <div className="flex justify-end space-x-2">
+        <form onSubmit={handleCommentSubmit} className="space-y-2">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows="2"
+            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+            placeholder="Add a comment..."
+            style={{
+              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+              outlineColor: tailwindColors['primary-color'],
+            }}
+            required
+          ></textarea>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+            placeholder="Your Name (Optional)"
+            style={{
+              backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+              color: isDarkMode ? 'white' : tailwindColors['text-color'],
+              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+              outlineColor: tailwindColors['primary-color'],
+            }}
+          />
+          {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+          {successMessage && <p className="text-green-500 text-sm">{successMessage}</p>}
+          <div className="flex space-x-2">
             <button
               type="button"
               onClick={onCancel}
-              className="px-3 py-1 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
               style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-3 py-1 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
+              className="flex-1 p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
               style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Post Comment'}
+              {isLoading ? 'Posting...' : 'Post Comment'}
             </button>
           </div>
         </form>
       );
     }
 
-    // --- Confirmation Modal for Deletion (Generic) ---
-    function ConfirmDeleteModal({ title, message, onConfirm, onCancel, confirmButtonText = "Delete" }) {
+    // --- Post Submission Modal Component ---
+    function PostModal({ setIsModalOpen, isAuthReady, localUserId }) {
+      const [content, setContent] = useState('');
+      const [name, setName] = useState('');
+      const [postType, setPostType] = useState('Update');
+      const [eventDate, setEventDate] = useState('');
+      const [eventTime, setEventTime] = useState('');
+      const [isLoading, setIsLoading] = useState(false);
+      const [errorMessage, setErrorMessage] = useState('');
+      const [successMessage, setSuccessMessage] = useState('');
       const { isDarkMode } = useContext(ThemeContext);
-      const modalRef = useRef(null);
-      const confirmButtonRef = useRef(null);
 
-      useEffect(() => {
-        if (confirmButtonRef.current) {
-          confirmButtonRef.current.focus();
+      const handlePostSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMessage('');
+
+        if (!isAuthReady) {
+          setErrorMessage('Please wait for the app to connect before posting.');
+          setIsLoading(false);
+          return;
         }
-      }, []);
 
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.key === 'Escape') {
-            onCancel();
+        if (!content.trim()) {
+          setErrorMessage('Please write something for your post.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (postType === 'Event') {
+          if (!eventDate) {
+            setErrorMessage('Please select a date for the event.');
+            setIsLoading(false);
+            return;
           }
-        };
-
-        const handleTabKey = (e) => {
-          if (e.key === 'Tab' && modalRef.current) {
-            const focusableElements = modalRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (e.shiftKey) {
-              if (document.activeElement === firstElement) {
-                lastElement.focus();
-                e.preventDefault();
-              }
-            } else {
-              if (document.activeElement === lastElement) {
-                firstElement.focus();
-                e.preventDefault();
-              }
-            }
+          if (!eventTime) {
+            setErrorMessage('Please select a time for the event.');
+            setIsLoading(false);
+            return;
           }
-        };
+        }
 
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('keydown', handleTabKey);
-
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-          document.removeEventListener('keydown', handleTabKey);
-        };
-      }, [onCancel]);
-
+        try {
+          const { error } = await supabaseInstance
+            .from('posts')
+            .insert({
+              content: content.trim(),
+              name: name.trim() || 'Anonymous',
+              type: postType,
+              timestamp: new Date().toISOString(),
+              event_date: postType === 'Event' ? eventDate : null,
+              event_time: postType === 'Event' ? eventTime : null,
+              user_id: localUserId, // Add the user's ID to the post
+              likes: 0,
+              likedBy: []
+            });
+          if (error) throw error;
+          setSuccessMessage('Your post has been submitted!');
+          setContent('');
+          setName('');
+          setPostType('Update');
+          setEventDate('');
+          setEventTime('');
+          setTimeout(() => {
+            setIsModalOpen(false);
+          }, 1500); // Close modal after success message
+        } catch (error) {
+          console.error("Error adding post:", error);
+          setErrorMessage("Failed to submit post. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
+      };
 
       return (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-modal-title"
-          ref={modalRef}
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+          style={{ zIndex: 1000 }}
         >
           <div
-            className={`w-full max-w-sm p-6 rounded-lg shadow-xl`}
+            className={`w-full max-w-lg p-6 rounded-xl shadow-2xl relative transition-all duration-300`}
             style={{
               backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
               color: isDarkMode ? 'white' : tailwindColors['text-color'],
             }}
           >
-            <h4 id="confirm-modal-title" className="text-lg font-bold mb-4">{title}</h4>
-            <p className="mb-6">{message}</p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={onCancel}
-                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-                style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={onConfirm}
-                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-                style={{ backgroundColor: tailwindColors['secondary-color'], color: 'white' }}
-                ref={confirmButtonRef}
-              >
-                {confirmButtonText}
-              </button>
-            </div>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-semibold mb-4 text-center">Create a New Post</h3>
+
+            <form onSubmit={handlePostSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="postContent">
+                  Your Post
+                </label>
+                <textarea
+                  id="postContent"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows="4"
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                  required
+                ></textarea>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Post Type
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['Update', 'Prayer Request', 'Provisions Needed', 'Clean Up Crew', 'Event'].map((type) => (
+                    <label key={type} className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="postType"
+                        value={type}
+                        checked={postType === type}
+                        onChange={(e) => {
+                          setPostType(e.target.value);
+                          if (e.target.value !== 'Event') {
+                            setEventDate('');
+                            setEventTime('');
+                          }
+                        }}
+                        className="form-radio"
+                        style={{ color: tailwindColors['primary-color'] }}
+                      />
+                      <span className="ml-1 text-sm">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {postType === 'Event' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="eventDate">
+                      Event Date
+                    </label>
+                    <input
+                      id="eventDate"
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1" htmlFor="eventTime">
+                      Event Time
+                    </label>
+                    <input
+                      id="eventTime"
+                      type="time"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                      style={{
+                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                        outlineColor: tailwindColors['primary-color'],
+                      }}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1" htmlFor="postName">
+                  Your Name (Optional)
+                </label>
+                <input
+                  id="postName"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
+                  placeholder="Your Name"
+                  style={{
+                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
+                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
+                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
+                    outlineColor: tailwindColors['primary-color'],
+                  }}
+                />
+              </div>
+
+              {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
+              {successMessage && <p className="text-green-500 text-sm mb-4">{successMessage}</p>}
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Submitting...' : 'Submit Post'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       );
@@ -326,7 +1066,7 @@
               type: postType,
               event_date: postType === 'Event' ? eventDate : null,
               event_time: postType === 'Event' ? eventTime : null,
-              timestamp: new Date().toISOString(),
+              timestamp: new Date().toISOString(), // Update timestamp to show it was recently edited
             })
             .eq('id', post.id);
 
@@ -378,7 +1118,7 @@
                 Post Type
               </label>
               <div className="flex flex-wrap gap-2">
-                {['Update', 'Prayer Request', 'Provisions Needed', 'Event'].map((type) => (
+                {['Update', 'Prayer Request', 'Provisions Needed', 'Clean Up Crew', 'Event'].map((type) => (
                   <label key={type} className="inline-flex items-center cursor-pointer">
                     <input
                       type="radio"
@@ -480,1062 +1220,42 @@
       );
     }
     
-    // --- Post Submission Modal Component ---
-    function PostModal({ setIsModalOpen, isAuthReady, localUserId }) {
-      const [content, setContent] = useState('');
-      const [name, setName] = useState('');
-      const [postType, setPostType] = useState('Update');
-      const [eventDate, setEventDate] = useState('');
-      const [eventTime, setEventTime] = useState('');
-      const [isLoading, setIsLoading] = useState(false);
-      const [errorMessage, setErrorMessage] = useState('');
-      const [successMessage, setSuccessMessage] = useState('');
+    // --- Confirmation Modal for Deletion ---
+    function ConfirmDeleteModal({ onConfirm, onCancel }) {
       const { isDarkMode } = useContext(ThemeContext);
-      const modalRef = useRef(null);
-
-      // Focus the first form element when the modal is opened
-      useEffect(() => {
-        if (modalRef.current) {
-          modalRef.current.focus();
-        }
-      }, []);
-
-      // Handle keyboard events for accessibility
-      useEffect(() => {
-        const handleKeyDown = (e) => {
-          if (e.key === 'Escape') {
-            setIsModalOpen();
-          }
-        };
-
-        const handleTabKey = (e) => {
-          if (e.key === 'Tab' && modalRef.current) {
-            const focusableElements = modalRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (e.shiftKey) { // reverse tab
-              if (document.activeElement === firstElement) {
-                lastElement.focus();
-                e.preventDefault();
-              }
-            } else { // forward tab
-              if (document.activeElement === lastElement) {
-                firstElement.focus();
-                e.preventDefault();
-              }
-            }
-          }
-        };
-
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('keydown', handleTabKey);
-
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-          document.removeEventListener('keydown', handleTabKey);
-        };
-      }, [setIsModalOpen]);
-
-      const handlePostSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setErrorMessage('');
-
-        if (!isAuthReady) {
-          setErrorMessage('Please wait for the app to connect before posting.');
-          setIsLoading(false);
-          return;
-        }
-
-        if (!content.trim()) {
-          setErrorMessage('Please write something for your post.');
-          setIsLoading(false);
-          return;
-        }
-
-        if (postType === 'Event') {
-          if (!eventDate) {
-            setErrorMessage('Please select a date for the event.');
-            setIsLoading(false);
-            return;
-          }
-          if (!eventTime) {
-            setErrorMessage('Please select a time for the event.');
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        try {
-          const { error } = await supabaseInstance
-            .from('posts')
-            .insert({
-              content: content.trim(),
-              name: name.trim() || 'Anonymous',
-              type: postType,
-              timestamp: new Date().toISOString(),
-              event_date: postType === 'Event' ? eventDate : null,
-              event_time: postType === 'Event' ? eventTime : null,
-              // NOTE: This is another field that must exist in your Supabase 'posts' table.
-              user_id: localUserId, // Add the user's ID to the post
-              likes: 0,
-              likedBy: []
-            });
-          if (error) throw error;
-          setSuccessMessage('Your post has been submitted!');
-          setContent('');
-          setName('');
-          setPostType('Update');
-          setEventDate('');
-          setEventTime('');
-          setTimeout(() => {
-            setIsModalOpen();
-          }, 1500); // Close modal after success message
-        } catch (error) {
-          console.error("Error adding post:", error);
-          setErrorMessage("Failed to submit post. Please try again.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
 
       return (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          style={{ zIndex: 1000 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="modal-title"
-          ref={modalRef}
-        >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
-            className={`w-full max-w-lg p-6 rounded-xl shadow-2xl relative transition-all duration-300`}
+            className={`w-full max-w-sm p-6 rounded-lg shadow-xl`}
             style={{
               backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
               color: isDarkMode ? 'white' : tailwindColors['text-color'],
             }}
           >
-            <button
-              onClick={setIsModalOpen}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-              aria-label="Close modal"
-            >
-              &times;
-            </button>
-            <h3 id="modal-title" className="text-2xl font-semibold mb-4 text-center">Create a New Post</h3>
-
-            <form onSubmit={handlePostSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1" htmlFor="postContent">
-                  Your Post
-                </label>
-                <textarea
-                  id="postContent"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows="4"
-                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-                  style={{
-                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                    outlineColor: tailwindColors['primary-color'],
-                  }}
-                  required
-                ></textarea>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Post Type
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['Update', 'Prayer Request', 'Provisions Needed', 'Event'].map((type) => (
-                    <label key={type} className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="postType"
-                        value={type}
-                        checked={postType === type}
-                        onChange={(e) => {
-                          setPostType(e.target.value);
-                          if (e.target.value !== 'Event') {
-                            setEventDate('');
-                            setEventTime('');
-                          }
-                        }}
-                        className="form-radio"
-                        style={{ color: tailwindColors['primary-color'] }}
-                      />
-                      <span className="ml-1 text-sm">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {postType === 'Event' && (
-                <>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1" htmlFor="eventDate">
-                      Event Date
-                    </label>
-                    <input
-                      id="eventDate"
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-                      style={{
-                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                        outlineColor: tailwindColors['primary-color'],
-                      }}
-                      required
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1" htmlFor="eventTime">
-                      Event Time
-                    </label>
-                    <input
-                      id="eventTime"
-                      type="time"
-                      value={eventTime}
-                      onChange={(e) => setEventTime(e.target.value)}
-                      className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-                      style={{
-                        backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-                        color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                        borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                        outlineColor: tailwindColors['primary-color'],
-                      }}
-                      required
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1" htmlFor="postName">
-                  Your Name (Optional)
-                </label>
-                <input
-                  id="postName"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full p-2 rounded-lg border focus:ring focus:ring-opacity50"
-                  placeholder="Your Name"
-                  style={{
-                    backgroundColor: isDarkMode ? '#4a4a4a' : 'white',
-                    color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                    borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-                    outlineColor: tailwindColors['primary-color'],
-                  }}
-                />
-              </div>
-
-              {errorMessage && <p className="text-red-500 text-sm mb-4">{errorMessage}</p>}
-              {successMessage && <p className="text-green-500 text-sm mb-4">{successMessage}</p>}
-
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={setIsModalOpen}
-                  className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-                  style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Submitting...' : 'Submit Post'}
-                </button>
-              </div>
-            </form>
+            <h4 className="text-lg font-bold mb-4">Are you sure?</h4>
+            <p className="mb-6">This post will be permanently deleted. This action cannot be undone.</p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
+                style={{ backgroundColor: tailwindColors['secondary-color'], color: 'white' }}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       );
     }
-    
-    // --- Edit Comment Form Component ---
-    function EditCommentForm({ comment, onSave, onCancel }) {
-      const [content, setContent] = useState(comment.content);
-      const [isLoading, setIsLoading] = useState(false);
-      const [errorMessage, setErrorMessage] = useState('');
-      const { isDarkMode } = useContext(ThemeContext);
 
-      const handleSave = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setErrorMessage('');
-
-        if (!content.trim()) {
-          setErrorMessage('Comment content cannot be empty.');
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          const { error } = await supabaseInstance
-            .from('comments')
-            .update({ content: content.trim() })
-            .eq('id', comment.id);
-
-          if (error) throw error;
-          onSave();
-        } catch (error) {
-          console.error("Error updating comment:", error);
-          setErrorMessage("Failed to update comment. Please try again.");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      return (
-        <form onSubmit={handleSave} className="mt-2 p-3 rounded-lg border-2" style={{ borderColor: isDarkMode ? tailwindColors['primary-color'] : tailwindColors['primary-color'], backgroundColor: isDarkMode ? '#4a4a4a' : '#fff' }}>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows="2"
-            className="w-full p-2 rounded-lg text-sm border focus:ring focus:ring-opacity50"
-            style={{
-              backgroundColor: isDarkMode ? '#5a5a5a' : 'white',
-              color: isDarkMode ? 'white' : tailwindColors['text-color'],
-              borderColor: isDarkMode ? 'gray-600' : 'gray-300',
-              outlineColor: tailwindColors['primary-color'],
-            }}
-            required
-          ></textarea>
-          {errorMessage && <p className="text-red-500 text-sm mb-2">{errorMessage}</p>}
-          <div className="flex justify-end space-x-2 mt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-3 py-1 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-              style={{ backgroundColor: '#ccc', color: tailwindColors['text-color'] }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-3 py-1 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-              style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </form>
-      );
-    }
-    
-    // --- Post Card Component ---
-    function PostCard({ post, localUserId, isAuthReady }) {
-      const { fontSizeMultiplier } = useContext(FontSizeContext);
-      const { isDarkMode } = useContext(ThemeContext);
-      const [showComments, setShowComments] = useState(false);
-      const [showCommentForm, setShowCommentForm] = useState(false);
-      const [comments, setComments] = useState([]);
-      const [isEditing, setIsEditing] = useState(false);
-      const [showDeletePostModal, setShowDeletePostModal] = useState(false);
-      const [deletingCommentId, setDeletingCommentId] = useState(null);
-      const [editingCommentId, setEditingCommentId] = useState(null);
-      const editButtonRef = useRef(null);
-      const deleteButtonRef = useRef(null);
-
-      // Live listener for comments on this specific post
-      useEffect(() => {
-        if (isAuthReady && isSupabaseConfigValid && post.id) {
-          const fetchComments = async () => {
-            try {
-                const { data, error } = await supabaseInstance
-                  .from('comments')
-                  .select('*')
-                  .eq('post_id', post.id)
-                  .order('timestamp');
-                if (error) {
-                  console.error("Error fetching comments:", error);
-                } else {
-                  setComments(data);
-                }
-            } catch (err) {
-                console.error("Error in fetchComments:", err);
-            }
-          };
-
-          const channel = supabaseInstance.channel(`comments-${post.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, payload => {
-              fetchComments();
-            })
-            .subscribe();
-
-          fetchComments();
-
-          return () => {
-            supabaseInstance.removeChannel(channel);
-          };
-        }
-      }, [isAuthReady, isSupabaseConfigValid, post.id]);
-
-      // Function to handle liking a post
-      const handleLike = async () => {
-        if (!localUserId || !isSupabaseConfigValid) {
-          console.error("User not authenticated or Supabase not configured to like post.");
-          return;
-        }
-
-        try {
-          const { data: postData, error: fetchError } = await supabaseInstance
-            .from('posts')
-            .select('likes, likedBy')
-            .eq('id', post.id)
-            .single();
-
-          if (fetchError) throw fetchError;
-
-          const likedBy = postData.likedBy || [];
-          const hasLiked = likedBy.includes(localUserId);
-
-          let newLikes = postData.likes;
-          let newLikedBy = [...likedBy];
-
-          if (hasLiked) {
-            newLikes = Math.max(0, newLikes - 1);
-            newLikedBy = newLikedBy.filter(id => id !== localUserId);
-          } else {
-            newLikes = newLikes + 1;
-            newLikedBy.push(localUserId);
-          }
-
-          const { error: updateError } = await supabaseInstance
-            .from('posts')
-            .update({
-              likes: newLikes,
-              likedBy: newLikedBy
-            })
-            .eq('id', post.id);
-
-          if (updateError) throw updateError;
-        } catch (error) {
-          console.error("Error liking/unliking post:", error);
-        }
-      };
-
-      const handleDeletePost = async () => {
-        try {
-          const { error: commentError } = await supabaseInstance
-            .from('comments')
-            .delete()
-            .eq('post_id', post.id);
-          if (commentError) throw commentError;
-
-          const { error: postError } = await supabaseInstance
-            .from('posts')
-            .delete()
-            .eq('id', post.id);
-          if (postError) throw postError;
-          console.log("Post deleted successfully.");
-        } catch (error) {
-          console.error("Error deleting post:", error);
-        } finally {
-          setShowDeletePostModal(false);
-          if (deleteButtonRef.current) {
-            deleteButtonRef.current.focus();
-          }
-        }
-      };
-
-      const handleDeleteComment = async (commentId) => {
-        console.log(`Attempting to delete comment with ID: ${commentId}`);
-        console.log(`Using user ID: ${localUserId}`);
-        try {
-            const { error } = await supabaseInstance
-                .from('comments')
-                .delete()
-                .eq('id', commentId)
-                .eq('user_id', localUserId);
-            if (error) {
-              console.error("Supabase delete failed:", error);
-              throw error;
-            }
-            console.log("Comment deleted successfully.");
-        } catch (error) {
-            console.error("Error deleting comment:", error);
-        } finally {
-            setDeletingCommentId(null);
-        }
-      };
-
-      const getCardColor = (type) => {
-        switch (type) {
-          case 'Prayer Request':
-            return tailwindColors['prayer-color'];
-          case 'Provisions Needed':
-            return tailwindColors['provision-color'];
-          case 'Event':
-            return tailwindColors['event-color'];
-          case 'Update':
-          default:
-            return tailwindColors['update-color'];
-        }
-      };
-      
-      const getEventDateColor = () => {
-          return isDarkMode ? 'white' : tailwindColors['secondary-color'];
-      };
-
-      const name = post.name || 'Anonymous';
-      const postType = post.type || 'Update';
-      const likesCount = post.likes || 0;
-      const hasLiked = post.likedBy?.includes(localUserId);
-      const isPostOwner = post.user_id === localUserId;
-      
-      const renderEventDetails = () => {
-          if (post.type === 'Event' && post.event_date && post.event_time) {
-              const formattedDate = new Date(post.event_date).toLocaleDateString();
-              const formattedTime = new Date(`1970-01-01T${post.event_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-              return (
-                  <span className="ml-2 text-sm font-medium" style={{ color: getEventDateColor() }}>
-                      Event Date: {formattedDate} at {formattedTime}
-                  </span>
-              );
-          }
-          return null;
-      };
-
-      const renderPostInfo = () => {
-          const date = new Date(post.timestamp);
-          const formattedDate = date.toLocaleDateString();
-          const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          return `Posted by ${post.name || 'Anonymous'} on ${formattedDate} at ${formattedTime}`;
-      };
-
-      if (isEditing) {
-        return (
-          <EditPostForm post={post} setIsEditing={setIsEditing} />
-        );
-      }
-
-      return (
-        <div
-          className="p-4 rounded-lg shadow-md transition-all duration-300 relative"
-          style={{
-            backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'],
-            borderColor: getCardColor(postType),
-            borderWidth: '2px',
-            fontSize: `${1 * fontSizeMultiplier}rem`,
-          }}
-        >
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center space-x-2">
-              <span
-                className="text-xs font-bold rounded-full py-1 px-3"
-                style={{
-                  backgroundColor: getCardColor(postType),
-                  color: isDarkMode ? 'white' : tailwindColors['text-color'],
-                }}
-              >
-                {postType}
-              </span>
-              {renderEventDetails()}
-            </div>
-            <span className="text-xs italic" style={{ color: isDarkMode ? 'white' : '#555' }}>
-              {renderPostInfo()}
-            </span>
-          </div>
-          <p style={{ color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>{post.content}</p>
-
-          {/* Action buttons (Like & Comment) and Edit/Delete buttons */}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={handleLike}
-                className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                style={{ backgroundColor: hasLiked ? tailwindColors['primary-color'] : tailwindColors['button-bg'], color: 'white' }}
-                aria-label={hasLiked ? "Unlike post" : "Like post"}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                </svg>
-                <span>Like ({likesCount})</span>
-              </button>
-              <button
-                onClick={() => setShowComments(!showComments)}
-                className="flex items-center space-x-1 p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                aria-label={`View or add comments (${comments.length})`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.0 01-4.083-.98L2 17l1.338-3.138C2.462 12.118 2 10.113 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7z" clipRule="evenodd" />
-                </svg>
-                <span>Comments ({comments.length})</span>
-              </button>
-            </div>
-            {isPostOwner && (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
-                  style={{ backgroundColor: tailwindColors['primary-color'] }}
-                  aria-label="Edit Post"
-                  ref={editButtonRef}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setShowDeletePostModal(true)}
-                  className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
-                  style={{ backgroundColor: tailwindColors['secondary-color'] }}
-                  aria-label="Delete Post"
-                  ref={deleteButtonRef}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Comments section */}
-          {showComments && (
-            <div className="mt-4 border-t pt-4" style={{ borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}>
-              <div className="mt-4 space-y-2">
-                {comments.length > 0 ? (
-                  comments.map(comment => (
-                    editingCommentId === comment.id ? (
-                      <EditCommentForm
-                        key={comment.id}
-                        comment={comment}
-                        onSave={() => setEditingCommentId(null)}
-                        onCancel={() => setEditingCommentId(null)}
-                      />
-                    ) : (
-                      <div key={comment.id} className="p-3 rounded-lg flex justify-between items-start" style={{ backgroundColor: isDarkMode ? '#4a4a4a' : 'rgba(0,0,0,0.05)' }}>
-                        <div>
-                          <p className="text-sm font-semibold" style={{ color: isDarkMode ? 'white' : '#555' }}>
-                            {comment.name || 'Anonymous'}:
-                          </p>
-                          <p className="text-sm" style={{ color: isDarkMode ? '#e0e0e0' : tailwindColors['text-color'] }}>
-                            {comment.content}
-                          </p>
-                        </div>
-                        {comment.user_id === localUserId && (
-                          <div className="flex space-x-1 ml-4">
-                            <button
-                              onClick={() => setEditingCommentId(comment.id)}
-                              className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
-                              style={{ backgroundColor: tailwindColors['primary-color'] }}
-                              aria-label="Edit Comment"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => setDeletingCommentId(comment.id)}
-                              className="text-xs p-1 rounded-full text-white transition-transform duration-200 hover:scale-110"
-                              style={{ backgroundColor: tailwindColors['secondary-color'] }}
-                              aria-label="Delete Comment"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  ))
-                ) : (
-                  <p className="text-center italic text-sm text-gray-500">No comments yet. Be the first!</p>
-                )}
-              </div>
-              <div className="mt-4">
-                {!showCommentForm && (
-                  <button
-                    onClick={() => setShowCommentForm(true)}
-                    className="w-full p-2 rounded-lg font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-                  >
-                    Post Comment
-                  </button>
-                )}
-                {showCommentForm && <CommentForm postId={post.id} isAuthReady={isAuthReady} onCancel={() => setShowCommentForm(false)} localUserId={localUserId} />}
-              </div>
-            </div>
-          )}
-
-          {showDeletePostModal && (
-            <ConfirmDeleteModal
-              title="Are you sure?"
-              message="This post will be permanently deleted. This action cannot be undone."
-              onConfirm={handleDeletePost}
-              onCancel={() => setShowDeletePostModal(false)}
-            />
-          )}
-
-          {deletingCommentId && (
-            <ConfirmDeleteModal
-              title="Delete this comment?"
-              message="This comment will be permanently deleted. This action cannot be undone."
-              onConfirm={() => handleDeleteComment(deletingCommentId)}
-              onCancel={() => setDeletingCommentId(null)}
-              confirmButtonText="Delete Comment"
-            />
-          )}
-        </div>
-      );
-    }
-    
-    // --- Main App Component ---
-    function App() {
-      const [posts, setPosts] = useState([]);
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const [isAuthReady, setIsAuthReady] = useState(false);
-      const [localUserId, setLocalUserId] = useState(null);
-      // New state to manage the mobile menu's open/closed state
-      const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-      // Read initial settings from localStorage or use defaults
-      const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
-        const savedFontSize = localStorage.getItem('fontSizeMultiplier');
-        return savedFontSize ? parseFloat(savedFontSize) : 1;
-      });
-
-      const [isDarkMode, setIsDarkMode] = useState(() => {
-        const savedDarkMode = localStorage.getItem('isDarkMode');
-        return savedDarkMode === 'true'; // localStorage saves as a string
-      });
-      
-      const addPostButtonRef = useRef(null);
-
-      // Handle Supabase initialization and authentication
-      useEffect(() => {
-        if (!isSupabaseConfigValid) {
-            console.error("Supabase credentials are not configured. Please update the placeholders.");
-            return;
-        }
-
-        // Generate a unique user ID and store it in local storage.
-        // This is a simple way to track likes without a full auth system.
-        let id = localStorage.getItem('local_user_id');
-        if (!id) {
-            id = crypto.randomUUID();
-            localStorage.setItem('local_user_id', id);
-        }
-        setLocalUserId(id);
-        
-        // This listener is still useful for potential future authentication
-        const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
-          // You could use session.user.id here if you enable full auth later
-          setIsAuthReady(true);
-        });
-        
-        // Remove listener on cleanup
-        return () => {
-          if (authListener) {
-            authListener.subscription.unsubscribe();
-          }
-        };
-      }, []);
-
-      // Set up the real-time listener for posts
-      useEffect(() => {
-        // Check if auth is ready and config is valid before trying to fetch data
-        if (isAuthReady && isSupabaseConfigValid) {
-          const fetchPosts = async () => {
-            try {
-              const { data, error } = await supabaseInstance
-                .from('posts')
-                .select('*')
-                .order('timestamp', { ascending: false });
-              if (error) throw error;
-              setPosts(data);
-            } catch (error) {
-              console.error("Error fetching posts:", error);
-            }
-          };
-
-          const channel = supabaseInstance.channel('posts-channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, payload => {
-              fetchPosts();
-            })
-            .subscribe();
-
-          fetchPosts();
-
-          return () => {
-            supabaseInstance.removeChannel(channel);
-          };
-        }
-      }, [isAuthReady, isSupabaseConfigValid]);
-
-      useEffect(() => {
-        localStorage.setItem('isDarkMode', isDarkMode);
-      }, [isDarkMode]);
-
-      useEffect(() => {
-        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
-      }, [fontSizeMultiplier]);
-
-      const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode);
-      };
-
-      const increaseFontSize = () => {
-        setFontSizeMultiplier(prev => Math.min(prev + 0.1, 1.5));
-      };
-
-      const decreaseFontSize = () => {
-        setFontSizeMultiplier(prev => Math.max(prev - 0.1, 0.7));
-      };
-
-      const scrollToSection = (id) => {
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-          setIsMenuOpen(false); // Close menu after a link is clicked
-        }
-      };
-      
-      const toggleMenu = () => {
-          setIsMenuOpen(!isMenuOpen);
-      };
-      
-      // Function to close the modal and restore focus to the button that opened it.
-      const handleCloseModal = () => {
-        setIsModalOpen(false);
-        if (addPostButtonRef.current) {
-          addPostButtonRef.current.focus();
-        }
-      };
-
-      // Conditionally render based on Supabase configuration
-      if (!isSupabaseConfigValid) {
-          return (
-              <div className="min-h-screen flex items-center justify-center p-4 text-center bg-gray-100">
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg max-w-md">
-                      <strong className="font-bold">Configuration Error!</strong>
-                      <span className="block sm:inline mt-2">
-                          Please replace the placeholder values 'YOUR_SUPABASE_URL' and 'YOUR_SUPABASE_ANON_KEY' in the code with your actual Supabase project credentials.
-                      </span>
-                  </div>
-              </div>
-          );
-      }
-
-      // Filter posts into categories
-      const prayerRequests = posts.filter(p => p.type === 'Prayer Request');
-      const provisionsNeeded = posts.filter(p => p.type === 'Provisions Needed');
-      const events = posts.filter(p => p.type === 'Event');
-      const updates = posts.filter(p => p.type === 'Update');
-
-      return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
-          <FontSizeContext.Provider value={{ fontSizeMultiplier, increaseFontSize, decreaseFontSize }}>
-            <div
-              className={`min-h-screen ${isDarkMode ? 'dark dark-paper-bg text-white' : 'light-paper-bg text-[#2b2b2b]'}`}
-            >
-              {/* Header Row 1: Logo, Church Name, and Accessibility Buttons */}
-              <div className="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md" style={{ backgroundColor: tailwindColors['bg-color'] }}>
-                <div className="flex items-center space-x-4 mb-4 md:mb-0">
-                  {/* The logo is now a clickable link */}
-                  <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
-                    <img
-                      src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
-                      alt="First Love Church Logo"
-                      className="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
-                    />
-                  </a>
-                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                    First Love Church
-                  </h1>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={increaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                    aria-label="Increase font size"
-                  >
-                    A+
-                  </button>
-                  <button
-                    onClick={decreaseFontSize}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                    aria-label="Decrease font size"
-                  >
-                    A-
-                  </button>
-                  <button
-                    onClick={toggleDarkMode}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105"
-                    style={{ backgroundColor: tailwindColors['primary-color'], color: tailwindColors['text-color'] }}
-                    aria-label={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode`}
-                  >
-                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Header Row 2: Bulletin Title and Navigation Button */}
-              <div className="relative w-full flex justify-between items-center p-4 md:px-12 md:py-4 shadow-sm" style={{ backgroundColor: tailwindColors['primary-color'] }}>
-                {/* The main title on the left */}
-                <h2 className="text-xl font-bold" style={{ color: tailwindColors['text-color'] }}>
-                  Women's Fellowship Bulletin
-                </h2>
-
-                {/* Single Menu Button and Conditional Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={toggleMenu}
-                    className="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 flex items-center"
-                    style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-                    aria-expanded={isMenuOpen}
-                    aria-controls="menu-dropdown"
-                  >
-                    MENU
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-2 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  {isMenuOpen && (
-                    <div id="menu-dropdown" className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-10 flex flex-col items-end space-y-2 p-4" style={{ backgroundColor: isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'], color: isDarkMode ? 'white' : tailwindColors['text-color'] }}>
-                      <button
-                        onClick={() => scrollToSection('updates-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Updates
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('events-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Events
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('prayer-requests-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Prayer Requests
-                      </button>
-                      <button
-                        onClick={() => scrollToSection('provisions-needed-section')}
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Provisions
-                      </button>
-                      <a
-                        href="MeetingSummaries.html"
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Meeting Summaries
-                      </a>
-                      <a
-                        href="Members.html"
-                        className="hover:underline transition-transform duration-200 hover:scale-105"
-                      >
-                        Members
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Post an Update Button - Centered below the headers */}
-              <div className="flex justify-center p-4">
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="p-2 md:p-3 rounded-lg text-sm md:text-base font-semibold transition-transform duration-200 hover:scale-105"
-                  ref={addPostButtonRef}
-                  style={{ backgroundColor: tailwindColors['button-bg'], color: 'white' }}
-                >
-                  Add a Post
-                </button>
-              </div>
-              
-              {/* Main Content Area - Posts Feed */}
-              <main className="p-4 md:p-6 max-w-4xl mx-auto flex flex-col gap-8">
-                <div className="col-span-1">
-                  <h2 id="updates-section" className="text-xl font-semibold mb-4 text-center">Updates</h2>
-                  <div className="space-y-4">
-                    {updates.length > 0 ? (
-                      updates.map(post => (
-                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 italic">No updates yet.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="col-span-1">
-                  <h2 id="events-section" className="text-xl font-semibold mb-4 text-center">Events</h2>
-                  <div className="space-y-4">
-                    {events.length > 0 ? (
-                      events.map(post => (
-                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 italic">No events scheduled at this time.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="col-span-1">
-                  <h2 id="prayer-requests-section" className="text-xl font-semibold mb-4 text-center">Prayer Requests</h2>
-                  <div className="space-y-4">
-                    {prayerRequests.length > 0 ? (
-                      prayerRequests.map(post => (
-                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 italic">No prayer requests at this time.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="col-span-1">
-                  <h2 id="provisions-needed-section" className="text-xl font-semibold mb-4 text-center">Provisions Needed</h2>
-                  <div className="space-y-4">
-                    {provisionsNeeded.length > 0 ? (
-                      provisionsNeeded.map(post => (
-                        <PostCard key={post.id} post={post} localUserId={localUserId} isAuthReady={isAuthReady} />
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 italic">No provisions needed at this time.</div>
-                    )}
-                  </div>
-                </div>
-              </main>
-
-              {/* Footer */}
-              <footer className="w-full text-center p-4 mt-8" style={{ backgroundColor: tailwindColors['footer-color'], color: 'white' }}>
-                <p className="text-sm">&copy; 2025 Women's Fellowship.</p>
-                <p className="text-sm">&copy; 2000 First Love Church. All rights reserved.</p>
-              </footer>
-
-              {/* Post Submission Modal */}
-              {isModalOpen && (
-                <PostModal setIsModalOpen={handleCloseModal} isAuthReady={isAuthReady} localUserId={localUserId} />
-              )}
-            </div>
-          </FontSizeContext.Provider>
-        </ThemeContext.Provider>
-      );
-    }
-    
     ReactDOM.render(<App />, document.getElementById('root'));
   </script>
 </body>
