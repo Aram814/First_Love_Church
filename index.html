@@ -89,7 +89,63 @@
     } else {
         console.error("Supabase Client failed to initialize: Invalid configuration placeholders.");
     }
-    
+
+    // --- NEW: Cleanup Reminder Modal Component ---
+    function CleanupReminderModal({ onClose }) {
+      const { isDarkMode } = useContext(ThemeContext);
+      const bgColor = isDarkMode ? tailwindColors['card-bg-dark'] : tailwindColors['card-bg-light'];
+      const textColor = isDarkMode ? 'white' : tailwindColors['text-color'];
+      
+      // WCAG: Close on Escape key and set initial focus
+      useEffect(() => {
+          const handleKeyDown = (event) => {
+              if (event.key === 'Escape') {
+                  onClose();
+              }
+          };
+          document.addEventListener('keydown', handleKeyDown);
+          
+          // Set focus to the close button
+          const closeButton = document.querySelector('[role="dialog"] button');
+          if (closeButton) {
+              closeButton.focus();
+          }
+
+          return () => {
+              document.removeEventListener('keydown', handleKeyDown);
+          };
+      }, [onClose]);
+
+      const modalContent = e('div', { 
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-labelledby": "reminder-title", // Added for accessibility
+          className: "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 transition-opacity duration-300" 
+          },
+        e('div', {
+          className: "w-full max-w-xs p-6 rounded-xl shadow-2xl border-4 transform scale-100 transition-all duration-300",
+          style: { 
+              backgroundColor: bgColor, 
+              color: textColor,
+              borderColor: tailwindColors['secondary-color'], // Use a stand-out color
+          },
+        },
+          e('h4', { id: "reminder-title", className: "text-xl font-bold mb-4 text-center", style: { color: tailwindColors['secondary-color'] } }, "Reminder!"),
+          e('p', { className: "mb-6 text-center font-medium" }, "We need people to sign up for Clean Up Crew!"),
+          e('div', { className: "flex justify-center" },
+            e('button', {
+              onClick: onClose,
+              className: "px-6 py-3 rounded-full font-bold text-lg transition-transform duration-200 hover:scale-105 shadow-lg",
+              style: { backgroundColor: tailwindColors['button-bg'], color: 'white' },
+            }, "Ok!")
+          )
+        )
+      );
+
+      return createPortal(modalContent, document.body);
+    }
+    // --- END NEW: Cleanup Reminder Modal Component ---
+
     // --- Utility Component for Confirmation Modal (Converted from JSX) ---
     function ConfirmDeleteModal({ onConfirm, onCancel }) {
       const { isDarkMode } = useContext(ThemeContext);
@@ -927,6 +983,9 @@
       const [isAuthReady, setIsAuthReady] = useState(false);
       const [localUserId, setLocalUserId] = useState(null);
       const [isMenuOpen, setIsMenuOpen] = useState(false);
+      
+      // NEW STATE for Cleanup Reminder
+      const [showReminder, setShowReminder] = useState(false);
 
       const [fontSizeMultiplier, setFontSizeMultiplier] = useState(() => {
         const savedFontSize = localStorage.getItem('fontSizeMultiplier');
@@ -952,6 +1011,12 @@
         }
         setLocalUserId(id);
         
+        // NEW: Check local storage for reminder dismissal
+        const reminderDismissed = localStorage.getItem('cleanupReminderDismissed');
+        if (!reminderDismissed) {
+            setShowReminder(true);
+        }
+
         const { data: authListener } = supabaseInstance.auth.onAuthStateChange((event, session) => {
           setIsAuthReady(true);
         });
@@ -962,6 +1027,12 @@
           }
         };
       }, []);
+      
+      // NEW: Function to dismiss the reminder
+      const handleDismissReminder = () => {
+        setShowReminder(false);
+        localStorage.setItem('cleanupReminderDismissed', 'true');
+      };
 
       // Set up the real-time listener for posts
       useEffect(() => {
@@ -1227,7 +1298,10 @@
                 ),
 
                 // Post Submission Modal (Rendered via Portal)
-                isModalOpen && e(PostModal, { setIsModalOpen: setIsModalOpen, isAuthReady: isAuthReady, localUserId: localUserId })
+                isModalOpen && e(PostModal, { setIsModalOpen: setIsModalOpen, isAuthReady: isAuthReady, localUserId: localUserId }),
+                
+                // NEW: Cleanup Reminder Modal (Rendered via Portal)
+                showReminder && e(CleanupReminderModal, { onClose: handleDismissReminder })
               )
           )
       );
