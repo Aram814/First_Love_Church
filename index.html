@@ -9,8 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
-  <!-- FONT STYLES (Keep in head for fast rendering) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- FONT STYLES - PERFORMANCE IMPROVEMENT: Use non-blocking loading strategy to fix "Render blocking requests" -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
   
   <style>
     body {
@@ -1103,7 +1104,9 @@
                       e('img', {
                         src: "https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png",
                         alt: "First Love Church Logo",
-                        className: "h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+                        className: "h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105",
+                        width: "64", // ADDED: For CLS prevention
+                        height: "64" // ADDED: For CLS prevention
                       })
                     ),
                     e('h1', { className: "text-2xl md:text-3xl font-bold", style: { color: tailwindColors['text-color'] } }, "First Love Church")
