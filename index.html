@@ -270,6 +270,21 @@
           return;
         }
 
+        // NEW: Validation for Clean Up Crew
+        if (postType === 'Clean Up Crew') {
+            if (!eventDate) {
+                setErrorMessage('Clean Up Crew posts require an available date.');
+                setIsLoading(false);
+                return;
+            }
+            if (!name.trim()) {
+                setErrorMessage('Please provide your name for the Clean Up Crew post.');
+                setIsLoading(false);
+                return;
+            }
+        }
+        // END NEW VALIDATION
+
         try {
           const { error } = await supabaseInstance
             .from('posts')
@@ -277,8 +292,8 @@
               content: content.trim(),
               name: name.trim() || 'Anonymous',
               type: postType,
-              event_date: postType === 'Event' ? eventDate : null,
-              event_time: postType === 'Event' ? eventTime : null,
+              event_date: (postType === 'Event' || postType === 'Clean Up Crew') ? eventDate : null,
+              event_time: postType === 'Event' ? eventTime : null, // Clean Up Crew time is optional
               timestamp: new Date().toISOString(),
             })
             .eq('id', post.id);
@@ -344,9 +359,11 @@
               ))
             )
           ),
-          postType === 'Event' && e(Fragment, null,
+          
+          // MODIFIED: Conditional rendering for Date/Time fields
+          (postType === 'Event' || postType === 'Clean Up Crew') && e(Fragment, null,
             e('div', { className: "mb-4" },
-              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editEventDate" }, "Event Date"),
+              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editEventDate" }, postType === 'Clean Up Crew' ? "Available Date (Required)" : "Event Date"),
               e('input', {
                 id: "editEventDate",
                 type: "date",
@@ -354,11 +371,11 @@
                 onChange: (evt) => setEventDate(evt.target.value),
                 className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
                 style: inputStyle,
-                required: true,
+                required: true, // Now required for both Event and Clean Up Crew
               })
             ),
             e('div', { className: "mb-4" },
-              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editEventTime" }, "Event Time"),
+              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editEventTime" }, postType === 'Clean Up Crew' ? "Available Time (Optional)" : "Event Time"),
               e('input', {
                 id: "editEventTime",
                 type: "time",
@@ -366,12 +383,15 @@
                 onChange: (evt) => setEventTime(evt.target.value),
                 className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
                 style: inputStyle,
-                required: true,
+                required: postType === 'Event', // Only required for Event
               })
             )
           ),
+
           e('div', { className: "mb-4" },
-            e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editName" }, "Your Name (Optional)"),
+            e('label', { className: "block text-sm font-medium mb-1", htmlFor: "editName" }, 
+              postType === 'Clean Up Crew' ? "Your Name (Required)" : "Your Name (Optional)" // MODIFIED LABEL
+            ),
             e('input', {
               id: "editName",
               type: "text",
@@ -380,6 +400,7 @@
               className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
               placeholder: "Your Name",
               style: inputStyle,
+              required: postType === 'Clean Up Crew', // ADDED required attribute
             })
           ),
           errorMessage && e('p', { className: "text-red-500 text-sm mb-4" }, errorMessage),
@@ -452,18 +473,27 @@
           return;
         }
 
-        if (postType === 'Event') {
-          if (!eventDate) {
-            setErrorMessage('Please select a date for the event.');
-            setIsLoading(false);
-            return;
-          }
-          if (!eventTime) {
-            setErrorMessage('Please select a time for the event.');
-            setIsLoading(false);
-            return;
-          }
+        // Existing validation for Event
+        if (postType === 'Event' && (!eventDate || !eventTime)) {
+          setErrorMessage('Event posts require a date and time.');
+          setIsLoading(false);
+          return;
         }
+
+        // NEW: Validation for Clean Up Crew
+        if (postType === 'Clean Up Crew') {
+            if (!eventDate) {
+                setErrorMessage('Clean Up Crew posts require an available date.');
+                setIsLoading(false);
+                return;
+            }
+            if (!name.trim()) {
+                setErrorMessage('Please provide your name for the Clean Up Crew post.');
+                setIsLoading(false);
+                return;
+            }
+        }
+        // END NEW VALIDATION
 
         try {
           const { error } = await supabaseInstance
@@ -473,8 +503,9 @@
               name: name.trim() || 'Anonymous',
               type: postType,
               timestamp: new Date().toISOString(),
-              event_date: postType === 'Event' ? eventDate : null,
-              event_time: postType === 'Event' ? eventTime : null,
+              // Update how date/time fields are saved to cover Clean Up Crew
+              event_date: (postType === 'Event' || postType === 'Clean Up Crew') ? eventDate : null,
+              event_time: postType === 'Event' ? eventTime : null, // Clean Up Crew time is optional
               user_id: localUserId,
               likes: 0,
               likedBy: []
@@ -550,7 +581,8 @@
                     checked: postType === type,
                     onChange: (evt) => {
                       setPostType(evt.target.value);
-                      if (evt.target.value !== 'Event') {
+                      // Clear date/time if switching away from post types that require them
+                      if (evt.target.value !== 'Event' && evt.target.value !== 'Clean Up Crew') {
                         setEventDate('');
                         setEventTime('');
                       }
@@ -562,9 +594,11 @@
                 ))
               )
             ),
-            postType === 'Event' && e(Fragment, null,
+            
+            // MODIFIED: Conditional rendering for Date/Time fields
+            (postType === 'Event' || postType === 'Clean Up Crew') && e(Fragment, null,
               e('div', { className: "mb-4" },
-                e('label', { className: "block text-sm font-medium mb-1", htmlFor: "eventDate" }, "Event Date"),
+                e('label', { className: "block text-sm font-medium mb-1", htmlFor: "eventDate" }, postType === 'Clean Up Crew' ? "Available Date (Required)" : "Event Date"),
                 e('input', {
                   id: "eventDate",
                   type: "date",
@@ -572,11 +606,11 @@
                   onChange: (evt) => setEventDate(evt.target.value),
                   className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
                   style: inputStyle,
-                  required: true,
+                  required: true, // Now required for both Event and Clean Up Crew
                 })
               ),
               e('div', { className: "mb-4" },
-                e('label', { className: "block text-sm font-medium mb-1", htmlFor: "eventTime" }, "Event Time"),
+                e('label', { className: "block text-sm font-medium mb-1", htmlFor: "eventTime" }, postType === 'Clean Up Crew' ? "Available Time (Optional)" : "Event Time"),
                 e('input', {
                   id: "eventTime",
                   type: "time",
@@ -584,12 +618,15 @@
                   onChange: (evt) => setEventTime(evt.target.value),
                   className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
                   style: inputStyle,
-                  required: true,
+                  required: postType === 'Event', // Only required for Event
                 })
               )
             ),
+
             e('div', { className: "mb-4" },
-              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "postName" }, "Your Name (Optional)"),
+              e('label', { className: "block text-sm font-medium mb-1", htmlFor: "postName" }, 
+                postType === 'Clean Up Crew' ? "Your Name (Required)" : "Your Name (Optional)" // MODIFIED LABEL
+              ),
               e('input', {
                 id: "postName",
                 type: "text",
@@ -598,6 +635,7 @@
                 className: "w-full p-2 rounded-lg border focus:ring focus:ring-opacity50",
                 placeholder: "Your Name",
                 style: inputStyle,
+                required: postType === 'Clean Up Crew', // ADDED required attribute
               })
             ),
             errorMessage && e('p', { className: "text-red-500 text-sm mb-4" }, errorMessage),
@@ -748,11 +786,20 @@
       const isPostOwner = post.user_id === localUserId;
       
       const renderEventDetails = () => {
-          if (post.type === 'Event' && post.event_date && post.event_time) {
+          if ((post.type === 'Event' || post.type === 'Clean Up Crew') && post.event_date) {
               const formattedDate = new Date(post.event_date).toLocaleDateString();
-              const formattedTime = new Date(`1970-01-01T${post.event_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              let detailText = post.type === 'Clean Up Crew' ? `Available Date: ${formattedDate}` : `Event Date: ${formattedDate}`;
+              
+              if (post.type === 'Event' && post.event_time) {
+                const formattedTime = new Date(`1970-01-01T${post.event_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                detailText += ` at ${formattedTime}`;
+              } else if (post.type === 'Clean Up Crew' && post.event_time) {
+                const formattedTime = new Date(`1970-01-01T${post.event_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                detailText += ` (Time: ${formattedTime})`;
+              }
+
               return e('span', { className: "ml-2 text-sm font-medium", style: { color: getEventDateColor() } }, 
-                  `Event Date: ${formattedDate} at ${formattedTime}`
+                  detailText
               );
           }
           return null;
@@ -762,7 +809,11 @@
           const date = new Date(post.timestamp);
           const formattedDate = date.toLocaleDateString();
           const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          return `Posted by ${post.name || 'Anonymous'} on ${formattedDate} at ${formattedTime}`;
+          
+          // Name is required for Clean Up Crew, but we check if it exists just in case
+          const nameDisplay = post.name && post.name.trim() !== '' ? post.name : 'Anonymous';
+          
+          return `Posted by ${nameDisplay} on ${formattedDate} at ${formattedTime}`;
       };
 
       if (isEditing) {
@@ -916,6 +967,7 @@
         if (isAuthReady && isSupabaseConfigValid) {
           const fetchPosts = async () => {
             try {
+              // IMPORTANT: Fetch all posts, sorted by the default timestamp descending (newest post overall first)
               const { data, error } = await supabaseInstance
                 .from('posts')
                 .select('*')
@@ -983,11 +1035,47 @@
           );
       }
 
+      // Filter and separate posts.
+      // Other categories remain sorted by post creation time (descending: newest post overall first).
       const prayerRequests = posts.filter(p => p.type === 'Prayer Request');
       const provisionsNeeded = posts.filter(p => p.type === 'Provisions Needed');
-      const events = posts.filter(p => p.type === 'Event');
       const updates = posts.filter(p => p.type === 'Update');
-      const cleanup = posts.filter(p => p.type === 'Clean Up Crew');
+
+      // Common reference point for date comparison (start of today)
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); 
+
+      // --- LOGIC 1: Sort Events Chronologically by Event Date ---
+      const allEvents = posts.filter(p => p.type === 'Event' && p.event_date); 
+      const futureEvents = allEvents.filter(p => new Date(p.event_date) >= now);
+      const pastEvents = allEvents.filter(p => new Date(p.event_date) < now);
+
+      // Sort future events chronologically (ascending date: nearest event first)
+      futureEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
+      // Sort past events in reverse chronological order (newest past date first)
+      pastEvents.sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
+
+      // Combine them: Future Events, followed by Past Events
+      const sortedEvents = [...futureEvents, ...pastEvents];
+      // -----------------------------------------------------------
+      
+      // --- LOGIC 2: Sort Clean Up Crew Chronologically by Available Date ---
+      const allCleanup = posts.filter(p => p.type === 'Clean Up Crew' && p.event_date);
+
+      const futureCleanup = allCleanup.filter(p => new Date(p.event_date) >= now);
+      const pastCleanup = allCleanup.filter(p => new Date(p.event_date) < now);
+
+      // Sort future cleanup chronologically (ascending date: nearest available date first)
+      futureCleanup.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
+      // Sort past cleanup in reverse chronological order (newest past date first)
+      pastCleanup.sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
+
+      // Combine them: Future Cleanup, followed by Past Cleanup
+      const sortedCleanup = [...futureCleanup, ...pastCleanup];
+      // ----------------------------------------------------------------------
+
 
       // UPDATED: Menu items reflect content order (Clean Up Crew is last).
       const menuItems = [
@@ -1085,8 +1173,9 @@
                   e('div', { className: "col-span-1" },
                     e('h2', { id: "events-section", className: "text-xl font-semibold mb-4 text-center" }, "Events"),
                     e('div', { className: "space-y-4" },
-                      events.length > 0 ? (
-                        events.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
+                      // RENDER SORTED EVENTS
+                      sortedEvents.length > 0 ? (
+                        sortedEvents.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
                       ) : (
                         e('div', { className: "text-center text-gray-500 italic" }, "No events scheduled at this time.")
                       )
@@ -1118,8 +1207,9 @@
                   e('div', { className: "col-span-1" },
                     e('h2', { id: "cleanup-section", className: "text-xl font-semibold mb-4 text-center" }, "Clean Up Crew"),
                     e('div', { className: "space-y-4" },
-                      cleanup.length > 0 ? (
-                        cleanup.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
+                      // RENDER SORTED CLEANUP POSTS
+                      sortedCleanup.length > 0 ? ( 
+                        sortedCleanup.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
                       ) : (
                         e('div', { className: "text-center text-gray-500 italic" }, "No one signed up at this time.")
                       )
