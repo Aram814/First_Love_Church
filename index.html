@@ -9,13 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
+  <!-- FONT STYLES (Keep in head for fast rendering) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- NOTE: Babel is removed for massive performance gain. -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     body {
@@ -38,6 +33,13 @@
 <body>
   <div id="root"></div>
 
+  <!-- PERFORMANCE IMPROVEMENT: ALL library scripts moved to the end of the body with 'defer' -->
+  <!-- This prevents the scripts from blocking initial page rendering. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <!-- NOTE: The script type is now standard JavaScript (no Babel). -->
   <script type="text/javascript">
     const { useState, useEffect, createContext, useContext, createElement: e, Fragment } = React;
@@ -987,12 +989,13 @@
       const updates = posts.filter(p => p.type === 'Update');
       const cleanup = posts.filter(p => p.type === 'Clean Up Crew');
 
+      // UPDATED: Menu items reflect content order (Clean Up Crew is last).
       const menuItems = [
           { id: 'updates-section', text: 'Updates' },
           { id: 'events-section', text: 'Events' },
-          { id: 'cleanup-section', text: 'Clean Up Crew' },
           { id: 'prayer-requests-section', text: 'Prayer Requests' },
           { id: 'provisions-needed-section', text: 'Provisions' },
+          { id: 'cleanup-section', text: 'Clean Up Crew' }, 
       ];
       
       const linkItems = [
@@ -1091,17 +1094,6 @@
                   ),
 
                   e('div', { className: "col-span-1" },
-                    e('h2', { id: "cleanup-section", className: "text-xl font-semibold mb-4 text-center" }, "Clean Up Crew"),
-                    e('div', { className: "space-y-4" },
-                      cleanup.length > 0 ? (
-                        cleanup.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
-                      ) : (
-                        e('div', { className: "text-center text-gray-500 italic" }, "No one signed up at this time.")
-                      )
-                    )
-                  ),
-
-                  e('div', { className: "col-span-1" },
                     e('h2', { id: "prayer-requests-section", className: "text-xl font-semibold mb-4 text-center" }, "Prayer Requests"),
                     e('div', { className: "space-y-4" },
                       prayerRequests.length > 0 ? (
@@ -1119,6 +1111,17 @@
                         provisionsNeeded.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
                       ) : (
                         e('div', { className: "text-center text-gray-500 italic" }, "No provisions needed at this time.")
+                      )
+                    )
+                  ),
+                  
+                  e('div', { className: "col-span-1" },
+                    e('h2', { id: "cleanup-section", className: "text-xl font-semibold mb-4 text-center" }, "Clean Up Crew"),
+                    e('div', { className: "space-y-4" },
+                      cleanup.length > 0 ? (
+                        cleanup.map(post => e(PostCard, { key: post.id, post: post, localUserId: localUserId, isAuthReady: isAuthReady }))
+                      ) : (
+                        e('div', { className: "text-center text-gray-500 italic" }, "No one signed up at this time.")
                       )
                     )
                   )
