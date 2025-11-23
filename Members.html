@@ -8,185 +8,705 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase CDN for browser access -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* * Base Tailwind styles are used here for layout, spacing, and hover effects.
+     * Colors will be applied via JavaScript using inline styles based on the user's original logic.
+     */
     body {
       font-family: 'Inter', sans-serif;
+      /* Initial state for layout and font only */
+      transition: color 0.3s, background-color 0.3s;
+    }
+    
+    /* Utility class for primary/gold background buttons (used only for the Back link) */
+    .primary-button-style {
+        /* Confirmed styling: Secondary background, primary text, high contrast, prominent */
+        @apply bg-[#b83b3b] text-[#caa72d] shadow-2xl font-bold transition-all duration-300 hover:scale-[1.05] rounded-full px-6 py-3 hover:shadow-2xl border-4 border-[#caa72d]; 
+    }
+
+    /* Base style for CRUD/Theme/Font buttons - colors applied by JS */
+    .app-button {
+      /* CONFIRMED: Using rounded-full for the pill shape on all utility buttons */
+      @apply shadow-md hover:shadow-lg py-2 px-4 text-sm font-semibold transition-transform duration-200 hover:scale-105 rounded-full;
+    }
+
+    /* Simple modal styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        padding: 24px;
+        /* Kept default rounded-xl for content box */
+        border-radius: 12px;
+        max-width: 90%;
+        width: 450px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-height: 90vh;
+        overflow-y: auto;
+        /* Initial card background for modal - will be overwritten by JS */
+        background-color: #e9e2d0; 
+    }
+    .member-name {
+      /* This element is not manipulated by the user's JS, so we apply the secondary color here */
+      @apply text-[#b83b3b];
     }
   </style>
 </head>
-<body class="transition-colors duration-300">
+<body id="body">
 
   <!-- Header Section -->
   <div id="header" class="flex flex-col md:flex-row justify-between items-center p-4 md:p-6 shadow-md transition-colors duration-300">
     <div class="flex items-center space-x-4 mb-4 md:mb-0">
-      <a href="https://www.firstlovechurch.org/" target="_blank" rel="noopener noreferrer">
+      <a href="index.html" target="_blank" rel="noopener noreferrer">
         <img
           src="https://raw.githubusercontent.com/Aram814/First_Love_Church/refs/heads/main/first-love-logo-2017.png"
           alt="First Love Church Logo"
           class="h-16 w-16 rounded-full transition-transform duration-200 hover:scale-105"
+          onerror="this.onerror=null; this.src='https://placehold.co/64x64/caa72d/ffffff?text=FLC';"
         />
       </a>
+      <!-- Added id for JS manipulation -->
       <h1 id="main-heading" class="text-2xl md:text-3xl font-bold transition-colors duration-300">
-        First Love Church
+        Women's Fellowship Members
       </h1>
     </div>
-    <div class="flex space-x-2">
-        <button
-          id="increase-font"
-          aria-label="Increase font size"
-          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
-        >
-          A+
-        </button>
-        <button
-          id="decrease-font"
-          aria-label="Decrease font size"
-          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
-        >
-          A-
-        </button>
-        <button
-          id="toggle-theme"
-          aria-label="Toggle light and dark mode"
-          class="p-2 rounded-lg text-sm font-semibold transition-transform duration-200 hover:scale-105 bg-[#b83b3b] text-white"
-        >
-          Dark Mode
-        </button>
-      </div>
+    
+    <!-- Controls Container: Restructured for required order (Admin/Accessibility on top row, Back underneath) -->
+    <div class="flex flex-col items-center md:items-end gap-3 w-full md:w-auto">
+        
+        <!-- Row 1: Admin + Accessibility Buttons -->
+        <div class="flex flex-wrap justify-center md:justify-end items-center gap-3 w-full md:w-auto">
+            
+            <!-- 1. Auth Controls (Admin Login/Logout) -->
+            <div class="flex">
+                <button
+                    id="toggle-admin-btn"
+                    aria-label="Toggle Admin Mode"
+                    class="app-button"
+                >
+                    Log In as Admin
+                </button>
+            </div>
+            
+            <!-- 2. Accessibility Buttons (A+, A-, Theme) -->
+            <div class="flex flex-wrap justify-center gap-2">
+                <!-- A+ Button -->
+                <button
+                id="increase-font"
+                aria-label="Increase font size"
+                class="app-button"
+                >
+                A+
+                </button>
+                <!-- A- Button -->
+                <button
+                id="decrease-font"
+                aria-label="Decrease font size"
+                class="app-button"
+                >
+                A-
+                </button>
+                <!-- Theme Toggle Button -->
+                <button
+                id="toggle-theme"
+                aria-label="Toggle light and dark mode"
+                class="app-button"
+                >
+                Dark Mode
+                </button>
+            </div>
+        </div>
+        
+        <!-- Row 2: Back button (This naturally flows underneath the Row 1 container) -->
+        <a href="index.html" class="primary-button-style w-full md:w-auto">
+            &larr; Back to Bulletin Board
+        </a>
+    </div>
   </div>
 
   <main class="p-4 md:p-6 max-w-4xl mx-auto">
+    <!-- Added id for JS manipulation -->
     <h2 id="members-heading" class="text-xl md:text-2xl font-bold text-center transition-colors duration-300 mb-8">
       Women's Fellowship Members
     </h2>
-    <p class="text-lg text-center mb-8">This page contains a list of active members and their contact information. Please remember to respect each other's privacy.</p>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      
-      <!-- Member Profile Card - Sue Belshaw -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Sue Belshaw</h3>
-        <p class="text-sm italic mb-2">Peer counseling, Biblical counseling</p>
-        <p class="mb-2"><strong>Phone:</strong> (802) 567-8901</p>
-        <p class="mb-4"><strong>Email:</strong> carriebeth54@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Erica -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-2">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Erica Osier</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 844-1777</p>
-        <p class="mb-4"><strong>Email:</strong> Grandma87654@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Kathryn Kerbo -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-3">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Kathryn Kerbo</h3>
-        <p class="text-sm italic mb-2">Pet Sitting</p>
-        <p class="mb-2"><strong>Phone:</strong> (352) 286-7843</p>
-        <p class="mb-4"><strong>Email:</strong> kaykaerbo@yahoo.com</p>
-      </div>
-      
-      <!-- Member Profile Card - Stephanie Cunningham -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-4">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Stephanie Cunningham</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 321-0696</p>
-        <p class="mb-4"><strong>Email:</strong> scunningham1234@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Ruth Carroll -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-5">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Ruth Carroll</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 895-3796</p>
-        <p class="mb-4"><strong>Email:</strong> carrollruth@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Barbara Fortin -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-6">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Barbara Fortin</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 425-4525</p>
-        <p class="mb-4"><strong>Email:</strong> rbfortin@outlook.com</p>
-      </div>
-
-      <!-- Member Profile Card - Jennifer Thomas -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-7">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Jennifer Thomas</h3>
-        <p class="text-sm italic mb-2">Death Doula, Grief counseling/assistance, Notary</p>
-        <p class="mb-2"><strong>Phone:</strong> (207) 249-0230</p>
-        <p class="mb-4"><strong>Email:</strong> jennythomas1729@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Amanda Ramirez -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-8">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Amanda Ramirez</h3>
-        <p class="text-sm italic mb-2">Computer/Cell phone assistance</p>
-        <p class="mb-2"><strong>Phone:</strong> (727) 294-2225</p>
-        <p class="mb-4"><strong>Email:</strong> arramirez814@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Peggy Blue -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-9">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Peggy Blue</h3>
-        <p class="text-sm italic mb-2">Professional organizer/Decorating</p>
-        <p class="mb-2"><strong>Phone:</strong> (352) 454-3893</p>
-        <p class="mb-4"><strong>Email:</strong> bluewing747@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Vickie Barrett -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-10">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Vickie Barrett</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 282-3893</p>
-        <p class="mb-4"><strong>Email:</strong> v120@aol.com</p>
-      </div>
-
-      <!-- Member Profile Card - Maxine Zick -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-11">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Maxine Zick</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 727-8850</p>
-        <p class="mb-4"><strong>Email:</strong> zmax1654@gmail.com</p>
-      </div>
-
-      <!-- Member Profile Card - Barbara Cyrus -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-12">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Barbara Cyrus</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 286-8040</p>
-        <p class="mb-4"><strong>Email:</strong> Barbaracyrus@icloud.com</p>
-      </div>
-
-      <!-- Member Profile Card - Heather Drake -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-13">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Heather Drake</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 427-7369</p>
-        <p class="mb-4"><strong>Email:</strong></p>
-      </div>
-
-      <!-- Member Profile Card - Sarah Leppert -->
-      <div class="p-6 rounded-xl shadow-md transition-colors duration-300" id="member-card-14">
-        <h3 class="text-xl font-semibold mb-2 text-[#b83b3b]">Sarah Leppert</h3>
-        <p class="mb-2"><strong>Phone:</strong> (352) 362-8215</p>
-        <p class="mb-4"><strong>Email:</strong>gatorcht@gmail.com</p>
-      </div>
-
+    <p id="sub-heading" class="text-lg text-center mb-4 text-gray-700 dark:text-gray-300">This page contains a list of active members and their contact information. Please remember to respect each other's privacy.</p>
+    
+    <!-- Admin Controls Area - Now shows user status -->
+    <div id="admin-info" class="mb-4 text-center text-sm font-mono text-gray-500">
+        <!-- User ID and Admin Status will be injected here -->
     </div>
 
-    <!-- Back button -->
-    <a href="index.html" class="mt-8 block w-full md:w-auto text-center py-2 px-4 rounded-lg font-semibold transition-transform duration-200 hover:scale-105" style="background-color: #caa72d; color: #2b2b2b;">
-      &larr; Back to Bulletin Board
-    </a>
+    <div id="add-member-button-container" class="mb-8 text-center hidden">
+        <!-- Add Member Button (colors applied by JS, uses app-button for rounded-full) -->
+        <button id="add-member-btn" class="app-button py-2 px-6 font-semibold hover:opacity-90">
+            + Add New Member
+        </button>
+    </div>
+
+    <!-- Member List Container (Dynamically rendered) -->
+    <div id="members-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-48">
+        <p id="loading-message" class="col-span-full text-center py-12 text-gray-500">Loading member data...</p>
+    </div>
 
   </main>
-  
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const body = document.body;
-      const header = document.getElementById('header');
-      const mainHeading = document.getElementById('main-heading');
-      const membersHeading = document.getElementById('members-heading');
-      const memberCards = document.querySelectorAll('[id^="member-card"]');
-      const toggleThemeBtn = document.getElementById('toggle-theme');
-      const increaseFontBtn = document.getElementById('increase-font');
-      const decreaseFontBtn = document.getElementById('decrease-font');
 
-      const colors = {
+  <!-- Add/Edit Member Modal (Used by Admin only for CRUD) -->
+  <div id="member-modal" class="modal-overlay">
+    <div id="member-modal-content" class="modal-content">
+        <h3 id="modal-title" class="text-2xl font-bold mb-4 text-[#b83b3b]">Add New Member</h3>
+        <form id="member-form">
+            <input type="hidden" id="member-id">
+            
+            <div class="mb-4">
+                <label for="name" class="block text-sm font-medium mb-1" id="label-name">Name</label>
+                <input type="text" id="name" required class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="Jane Doe">
+            </div>
+            
+            <div class="mb-4">
+                <label for="phone" class="block text-sm font-medium mb-1" id="label-phone">Phone (Optional)</label>
+                <input type="tel" id="phone" class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="(123) 456-7890">
+            </div>
+
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium mb-1" id="label-email">Email (Optional)</label>
+                <input type="email" id="email" class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="jane@example.com">
+            </div>
+
+            <div class="mb-4">
+                <label for="details" class="block text-sm font-medium mb-1" id="label-details">Details (Optional, e.g., Skills or Service offered)</label>
+                <input type="text" id="details" class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="Counseling, Pet Sitting, etc.">
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <!-- Cancel Button (Standard neutral color, kept rounded-lg for modal context) -->
+                <button type="button" id="close-member-modal-btn" class="py-2 px-4 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Cancel
+                </button>
+                <!-- Save Button (colors applied by JS, kept rounded-lg for modal context) -->
+                <button type="submit" id="submit-member-btn" class="py-2 px-4 rounded-lg font-semibold hover:opacity-90">
+                    Save Member
+                </button>
+            </div>
+        </form>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="admin-login-modal" class="modal-overlay">
+    <div id="admin-login-modal-content" class="modal-content">
+        <h3 class="text-2xl font-bold mb-2 text-[#b83b3b]">Admin Login</h3>
+        <p class="text-sm text-gray-500 mb-4" id="login-modal-text">
+            Enter your credentials registered with Supabase to gain admin access.
+        </p>
+        <form id="admin-login-form">
+            <div class="mb-4">
+                <label for="admin-email" class="block text-sm font-medium mb-1" id="label-admin-email">Email</label>
+                <input type="email" id="admin-email" required class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="admin@example.com">
+            </div>
+            
+            <div class="mb-4">
+                <label for="admin-password" class="block text-sm font-medium mb-1" id="label-admin-password">Password</label>
+                <input type="password" id="admin-password" required class="w-full p-2 border rounded-lg bg-gray-50 text-gray-900" placeholder="Password">
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" id="close-login-modal-btn" class="py-2 px-4 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                    Cancel
+                </button>
+                <!-- Login Button (colors applied by JS, kept rounded-lg for modal context) -->
+                <button type="submit" id="login-submit-btn" class="py-2 px-4 rounded-lg font-semibold hover:opacity-90">
+                    Login
+                </button>
+            </div>
+        </form>
+    </div>
+  </div>
+  
+  <script type="module">
+    // --- Supabase Configuration ---
+    const SUPABASE_URL = 'https://btercxzikklbkjpltoey.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0ZXJjeHppa2tsYmtqcGx0b2V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYwMDU5NjksImV4cCI6MjA3MTU4MTk2OX0.o0iUcb89y0TaN2-ze0cEFxljCt-tsZmbrZDl8NnEGfc';
+    const TABLE_NAME = 'members'; 
+    
+    // Initialize Supabase Client
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- Configuration Variables ---
+    const ADMIN_ID = 'a4ccd2d4-4497-4735-9ef5-9cabbfa2c0a5'; 
+    let userId = null;
+    let isAdmin = false;
+    let memberCards = []; // Global list of member cards for theme update
+
+    // --- DOM Elements ---
+    const body = document.getElementById('body');
+    const header = document.getElementById('header');
+    const mainHeading = document.getElementById('main-heading');
+    const membersHeading = document.getElementById('members-heading');
+    const membersContainer = document.getElementById('members-container');
+    const loadingMessage = document.getElementById('loading-message');
+    const addMemberBtnContainer = document.getElementById('add-member-button-container');
+    const addMemberBtn = document.getElementById('add-member-btn');
+    const memberModal = document.getElementById('member-modal');
+    const memberModalContent = document.getElementById('member-modal-content');
+    const memberForm = document.getElementById('member-form');
+    const closeModalMemberBtn = document.getElementById('close-member-modal-btn'); 
+    const modalTitle = document.getElementById('modal-title');
+    const adminInfo = document.getElementById('admin-info');
+    const toggleAdminBtn = document.getElementById('toggle-admin-btn');
+    const loginSubmitBtn = document.getElementById('login-submit-btn');
+    
+    // Login Modal Elements
+    const adminLoginModal = document.getElementById('admin-login-modal');
+    const adminLoginModalContent = document.getElementById('admin-login-modal-content');
+    const adminLoginForm = document.getElementById('admin-login-form');
+    const closeLoginModalBtn = document.getElementById('close-login-modal-btn');
+    const toggleThemeBtn = document.getElementById('toggle-theme');
+    const increaseFontBtn = document.getElementById('increase-font');
+    const decreaseFontBtn = document.getElementById('decrease-font');
+    
+    // --- Hardcoded Initial Data (for upserting if table is empty) ---
+    const initialMembers = [
+      { name: "Sue Belshaw", phone: "(802) 567-8901", email: "carriebeth54@gmail.com", details: "Peer counseling, Biblical counseling" },
+      { name: "Erica Osier", phone: "(352) 844-1777", email: "Grandma87654@gmail.com", details: "" },
+      { name: "Kathryn Kerbo", phone: "(352) 286-7843", email: "kaykaerbo@yahoo.com", details: "Pet Sitting" },
+      { name: "Stephanie Cunningham", phone: "(352) 321-0696", email: "scunningham1234@gmail.com", details: "" },
+      { name: "Ruth Carroll", phone: "(352) 895-3796", email: "carrollruth@gmail.com", details: "" },
+      { name: "Barbara Fortin", phone: "(352) 425-4525", email: "rbfortin@outlook.com", details: "" },
+      { name: "Jennifer Thomas", phone: "(207) 249-0230", email: "jennythomas1729@gmail.com", details: "Death Doula, Grief counseling/assistance, Notary" },
+      { name: "Amanda Ramirez", phone: "(727) 294-2225", email: "arramirez814@gmail.com", details: "Computer/Cell phone assistance" },
+      { name: "Peggy Blue", phone: "(352) 454-3893", email: "bluewing747@gmail.com", details: "Professional organizer/Decorating" },
+      { name: "Vickie Barrett", phone: "(352) 282-3893", email: "v120@aol.com", details: "" },
+      { name: "Maxine Zick", phone: "(352) 727-8850", email: "zmax1654@gmail.com", details: "" },
+      { name: "Barbara Cyrus", phone: "(352) 286-8040", email: "Barbaracyrus@icloud.com", details: "" },
+      { name: "Heather Drake", phone: "(352) 427-7369", email: "", details: "" },
+      { name: "Sarah Leppert", phone: "(352) 362-8215", email: "gatorcht@gmail.com", details: "" },
+    ];
+    
+    /**
+     * Attempts to check if initial data exists, and if not, upserts the default list.
+     */
+    async function initializeData() {
+        if (!isAdmin) return;
+
+        // 1. Check if any members exist
+        const { count, error: countError } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*', { count: 'exact', head: true });
+
+        if (countError) {
+            console.error("Error checking member count:", countError);
+            return;
+        }
+
+        if (count === 0) {
+            console.log("Supabase table is empty. Populating initial data...");
+            
+            // Assign the currently logged-in admin's UID for RLS purposes
+            const membersToInsert = initialMembers.map(m => ({ ...m, user_id: userId }));
+
+            const { error: insertError } = await supabaseClient
+                .from(TABLE_NAME)
+                .insert(membersToInsert);
+
+            if (insertError) {
+                console.error("Error inserting initial data:", insertError);
+            } else {
+                console.log("Initial data population complete.");
+            }
+        }
+    }
+
+    // --- Supabase Data Operations (CRUD) ---
+
+    async function saveMember(memberId, memberData) {
+        if (!isAdmin) {
+             alertUser("You must be logged in as Admin to add or edit members.");
+             return;
+        }
+        try {
+            const dataToSave = { 
+                name: memberData.name.trim(),
+                phone: memberData.phone.trim(),
+                email: memberData.email.trim(),
+                details: memberData.details.trim(), 
+            };
+            
+            if (memberId) {
+                // Update existing member
+                const { error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .update(dataToSave)
+                    .eq('id', memberId); 
+
+                if (error) throw error;
+            } else {
+                // Add new member
+                dataToSave.user_id = userId; // Include user_id on creation
+                const { error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .insert([dataToSave]);
+
+                if (error) throw error;
+            }
+            closeMemberModal();
+        } catch (error) {
+            console.error("Error saving member:", error);
+            alertUser(`Failed to save member: ${error.message}. Please ensure Supabase RLS policies are set correctly for 'members' table.`);
+        }
+    }
+
+    async function deleteMember(memberId) {
+        if (!isAdmin) {
+            alertUser("You must be logged in as Admin to delete members.");
+            return;
+        }
+        if (!await confirmDeletion()) return;
+        
+        try {
+            const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .delete()
+                .eq('id', memberId);
+            
+            if (error) throw error;
+            console.log("Member deleted successfully:", memberId);
+        } catch (error) {
+            console.error("Error deleting member:", error);
+            alertUser(`Failed to delete member: ${error.message}. Please ensure Supabase RLS policies are set correctly for 'members' table.`);
+        }
+    }
+
+    // --- Supabase Real-time Listener & Renderer ---
+
+    async function getMembers() {
+        const { data, error } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*'); // Removed .order() to allow client-side last name sort
+        
+        if (error) {
+            console.error("Supabase Fetch Error (Check RLS):", error);
+            membersContainer.innerHTML = '';
+            loadingMessage.style.display = 'block';
+            loadingMessage.className = 'col-span-full text-center py-12 text-red-500 font-semibold';
+            loadingMessage.textContent = `Error loading member data: ${error.message}. Please check if Row Level Security (RLS) is enabled and if a 'SELECT' policy exists for anonymous users in your Supabase 'members' table.`;
+            return [];
+        }
+        return data;
+    }
+    
+    // Helper function to extract last name for sorting
+    function getLastName(fullName) {
+        if (!fullName) return '';
+        const parts = fullName.trim().split(/\s+/);
+        // If there's more than one word, use the last word. Otherwise, use the whole string (for single names).
+        return parts.length > 1 ? parts[parts.length - 1] : fullName;
+    }
+
+    // Function to sort members by last name
+    function sortMembersByLastName(members) {
+        return members.sort((a, b) => {
+            const lastNameA = getLastName(a.name).toLowerCase();
+            const lastNameB = getLastName(b.name).toLowerCase();
+
+            if (lastNameA < lastNameB) return -1;
+            if (lastNameA > lastNameB) return 1;
+            
+            // Secondary sort by full name if last names are the same (first name tie-breaker)
+            const fullNameA = (a.name || '').toLowerCase();
+            const fullNameB = (b.name || '').toLowerCase();
+            if (fullNameA < fullNameB) return -1;
+            if (fullNameA > fullNameB) return 1;
+            
+            return 0;
+        });
+    }
+
+    let isListening = false;
+    async function listenForMembers() {
+        if (isListening) return;
+
+        const initialMembersData = await getMembers();
+        const sortedMembers = sortMembersByLastName(initialMembersData); // Sort by last name
+        renderMembers(sortedMembers);
+        
+        supabaseClient
+            .channel('members_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME }, async (payload) => {
+                const updatedMembers = await getMembers();
+                const sortedUpdatedMembers = sortMembersByLastName(updatedMembers); // Sort by last name on update
+                renderMembers(sortedUpdatedMembers);
+            })
+            .subscribe();
+            
+        isListening = true;
+    }
+
+    function renderMembers(members) {
+        membersContainer.innerHTML = ''; 
+        loadingMessage.style.display = 'none';
+        memberCards = []; // Reset global card list
+
+        if (members.length === 0) {
+            if (loadingMessage.className.indexOf('text-red-500') === -1) {
+              membersContainer.innerHTML = '<p class="col-span-full text-center py-12 text-gray-500">No members found.</p>';
+            }
+            return;
+        }
+
+        members.forEach(member => {
+            const card = document.createElement('div');
+            // Initial classes for layout, border-radius, and shadow
+            card.className = 'member-card p-6 rounded-xl shadow-lg transition-colors duration-300';
+
+            const memberHtml = `
+                <h3 class="member-name text-xl font-semibold mb-2">${member.name || 'Unknown'}</h3>
+                ${member.details ? `<p class="member-details text-sm italic mb-2">${member.details}</p>` : ''}
+                ${member.phone ? `<p class="member-detail mb-1"><strong>Phone:</strong> ${member.phone}</p>` : ''}
+                ${member.email ? `<p class="member-detail mb-4"><strong>Email:</strong> ${member.email}</p>` : ''}
+            `;
+            
+            card.innerHTML = memberHtml;
+
+            if (isAdmin) {
+                const adminControls = document.createElement('div');
+                adminControls.className = 'flex space-x-2 mt-4';
+                
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'text-sm font-medium text-[#caa72d] hover:text-[#b83b3b]';
+                editBtn.onclick = () => openMemberModal(member);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'text-sm font-medium text-red-500 hover:text-red-700';
+                deleteBtn.onclick = () => deleteMember(member.id);
+
+                adminControls.appendChild(editBtn);
+                adminControls.appendChild(deleteBtn);
+                card.appendChild(adminControls);
+            }
+
+            membersContainer.appendChild(card);
+            memberCards.push(card); // Add card to the global list
+        });
+        
+        // Re-apply theme and font size after rendering new cards
+        const isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+        applyTheme(isDarkMode);
+        applyFontSize(fontSizeMultiplier);
+    }
+    
+    // --- Authentication and Admin Check Setup ---
+
+    async function logout() {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            console.error("Logout error:", error);
+            alertUser("Failed to log out.");
+        }
+    }
+    
+    function openAdminLoginModal() {
+        adminLoginForm.reset();
+        adminLoginModal.style.display = 'flex';
+    }
+    
+    function closeAdminLoginModal() {
+        adminLoginModal.style.display = 'none';
+        adminLoginForm.reset();
+    }
+
+    async function setupAuthAndAdmin() {
+        loadingMessage.textContent = "Checking authentication status...";
+        
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error) {
+            console.error("Error getting session:", error);
+            userId = null;
+        } else {
+            userId = session?.user?.id || null;
+        }
+
+        isAdmin = userId === ADMIN_ID;
+        
+        const isDarkMode = localStorage.getItem('isDarkMode') === 'true';
+        
+        if (isAdmin) {
+            adminInfo.innerHTML = `<span style="color: ${isDarkMode ? 'rgb(74 222 128)' : 'rgb(22 163 74)'}; font-weight: bold;">ADMIN MODE ACTIVE</span> (UID: ${userId})`;
+            addMemberBtnContainer.classList.remove('hidden');
+            toggleAdminBtn.textContent = 'Log Out';
+        } else {
+            // Updated logic: if userId is null, statusText is an empty string
+            const statusText = userId ? `Logged in as standard user (UID: ${userId})` : ''; 
+            adminInfo.innerHTML = `${statusText}`;
+            toggleAdminBtn.textContent = 'Admin Login';
+            addMemberBtnContainer.classList.add('hidden');
+        }
+
+        toggleAdminBtn.onclick = isAdmin ? logout : openAdminLoginModal;
+        
+        listenForMembers();
+        
+        loadingMessage.textContent = "Loading member data...";
+        
+        if (isAdmin) {
+            // Only attempt to initialize data if we are an admin
+            initializeData();
+        }
+    }
+    
+    // --- Member Modal Functions ---
+
+    function openMemberModal(member = null) {
+        if (!isAdmin) return;
+        memberForm.reset();
+        document.getElementById('member-id').value = '';
+        
+        if (member) {
+            modalTitle.textContent = `Edit Member: ${member.name}`;
+            document.getElementById('member-id').value = member.id;
+            document.getElementById('name').value = member.name || '';
+            document.getElementById('phone').value = member.phone || '';
+            document.getElementById('email').value = member.email || '';
+            document.getElementById('details').value = member.details || ''; 
+            document.getElementById('submit-member-btn').textContent = 'Update Member';
+        } else {
+            modalTitle.textContent = 'Add New Member';
+            document.getElementById('submit-member-btn').textContent = 'Save Member';
+        }
+        memberModal.style.display = 'flex';
+    }
+
+    function closeMemberModal() {
+        memberModal.style.display = 'none';
+        memberForm.reset();
+    }
+    
+    // --- Custom Alert/Confirmation Functions (Reused) ---
+    function alertUser(message) {
+        const alertOverlay = document.createElement('div');
+        alertOverlay.className = 'modal-overlay';
+        const modalBg = localStorage.getItem('isDarkMode') === 'true' ? colors.dark.cardBg : colors.light.cardBg;
+        const modalText = localStorage.getItem('isDarkMode') === 'true' ? colors.dark.text : colors.light.text;
+        
+        const alertHtml = `
+            <div class="modal-content" style="background-color: ${modalBg};">
+                <h3 class="text-2xl font-bold mb-4 text-[#b83b3b]">Notification</h3>
+                <p class="mb-6" style="color: ${modalText};">${message}</p>
+                <div class="flex justify-end">
+                    <button id="close-alert-btn" class="py-2 px-4 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+        alertOverlay.innerHTML = alertHtml;
+        document.body.appendChild(alertOverlay);
+        alertOverlay.style.display = 'flex';
+        document.getElementById('close-alert-btn').onclick = () => alertOverlay.remove();
+    }
+
+    function confirmDeletion() {
+        return new Promise(resolve => {
+            const confirmationOverlay = document.createElement('div');
+            confirmationOverlay.className = 'modal-overlay';
+            const modalBg = localStorage.getItem('isDarkMode') === 'true' ? colors.dark.cardBg : colors.light.cardBg;
+            const modalText = localStorage.getItem('isDarkMode') === 'true' ? colors.dark.text : colors.light.text;
+
+            const modalHtml = `
+                <div class="modal-content" style="background-color: ${modalBg};">
+                    <h3 class="text-2xl font-bold mb-4 text-[#b83b3b]">Confirm Deletion</h3>
+                    <p class="mb-6" style="color: ${modalText};">Are you absolutely sure you want to permanently delete this member's entry?</p>
+                    <div class="flex justify-end space-x-3">
+                        <button id="cancel-delete-btn" class="py-2 px-4 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            Cancel
+                        </button>
+                        <button id="confirm-delete-btn" class="py-2 px-4 rounded-lg font-semibold bg-red-600 text-white hover:bg-red-700">
+                            Delete Permanently
+                        </button>
+                    </div>
+                </div>
+            `;
+            confirmationOverlay.innerHTML = modalHtml;
+            document.body.appendChild(confirmationOverlay);
+            confirmationOverlay.style.display = 'flex';
+
+            document.getElementById('cancel-delete-btn').onclick = () => {
+                confirmationOverlay.remove();
+                resolve(false);
+            };
+            document.getElementById('confirm-delete-btn').onclick = () => {
+                confirmationOverlay.remove();
+                resolve(true);
+            };
+        });
+    }
+
+    // --- Event Listeners ---
+
+    memberForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const memberId = document.getElementById('member-id').value;
+        const memberData = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            details: document.getElementById('details').value, 
+        };
+        saveMember(memberId, memberData);
+    });
+    
+    adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginSubmitBtn.textContent = 'Logging in...';
+        loginSubmitBtn.disabled = true;
+
+        const email = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-password').value.trim();
+        
+        const { error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        loginSubmitBtn.textContent = 'Login';
+        loginSubmitBtn.disabled = false;
+
+        if (error) {
+            console.error("Login error:", error);
+            alertUser(`Login Failed: ${error.message}`);
+        } else {
+            closeAdminLoginModal();
+        }
+    });
+
+    closeModalMemberBtn.addEventListener('click', closeMemberModal);
+    closeLoginModalBtn.addEventListener('click', closeAdminLoginModal);
+    addMemberBtn.addEventListener('click', () => openMemberModal(null));
+    
+    // --- Auth State Change Listener ---
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        setupAuthAndAdmin();
+    });
+    
+    // --- Theme & Font Controls (RESTORED ORIGINAL JS LOGIC) ---
+
+    let fontSizeMultiplier = 1; // 1 is 100%
+
+    const colors = {
         light: {
           bg: '#f5f2ed',
           text: '#2b2b2b',
@@ -206,67 +726,139 @@
           btnText: '#ffffff'
         }
       };
+      
+    // Function to get the current button elements (dynamic lookups needed)
+    function getAppButtons() {
+        return [
+            toggleAdminBtn, increaseFontBtn, decreaseFontBtn, 
+            document.getElementById('add-member-btn'), document.getElementById('toggle-theme')
+        ].filter(Boolean); // Filter out any null elements
+    }
 
-      const applyTheme = (isDark) => {
+    const applyTheme = (isDark) => {
         const theme = isDark ? colors.dark : colors.light;
 
-        // Apply colors to body and header background
+        // 1. Apply colors to body and header background
         body.style.backgroundColor = theme.bg;
         header.style.backgroundColor = theme.bg;
         
-        // Apply colors to text and heading
+        // 2. Apply colors to text and heading
         body.style.color = theme.text;
-        mainHeading.style.color = theme.text;
-        membersHeading.style.color = theme.text;
+        if(mainHeading) mainHeading.style.color = theme.text;
+        if(membersHeading) membersHeading.style.color = theme.text;
+        
+        // Apply text color to other hardcoded text
+        const textElements = [
+            document.getElementById('sub-heading'),
+            document.getElementById('admin-info'),
+            document.getElementById('login-modal-text'),
+            document.getElementById('label-name'),
+            document.getElementById('label-phone'),
+            document.getElementById('label-email'),
+            document.getElementById('label-details'),
+            document.getElementById('label-admin-email'),
+            document.getElementById('label-admin-password'),
+        ];
+        textElements.forEach(el => { if(el) el.style.color = theme.text; });
 
-        // Apply colors to the content cards
+
+        // 3. Apply colors to the content cards (must be iterated)
         memberCards.forEach(card => {
           card.style.backgroundColor = theme.cardBg;
+          // Ensure all text within the card follows the theme text color
+          card.style.color = theme.text;
+          // Re-apply secondary color to member name, as it should be fixed secondary color
+          const memberName = card.querySelector('.member-name');
+          if(memberName) memberName.style.color = colors.light.secondary; // Fixed secondary color
         });
-
-        // Apply colors to buttons
-        toggleThemeBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
-        toggleThemeBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
-        increaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
-        increaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
-        decreaseFontBtn.style.backgroundColor = isDark ? colors.dark.btnBg : colors.light.btnBg;
-        decreaseFontBtn.style.color = isDark ? colors.dark.btnText : colors.light.btnText;
+        
+        // Apply card background to modals
+        if(memberModalContent) memberModalContent.style.backgroundColor = theme.cardBg;
+        if(adminLoginModalContent) adminLoginModalContent.style.backgroundColor = theme.cardBg;
+        
+        // 4. Apply colors to app-buttons (dynamic lookup)
+        const appButtons = getAppButtons();
+        
+        appButtons.forEach(btn => {
+            if (btn) {
+                btn.style.backgroundColor = theme.btnBg;
+                btn.style.color = theme.btnText;
+            }
+        });
+        
+        // 5. Apply colors to modal buttons (which don't use the app-button class, but need theme)
+        // Login/Save buttons in modals:
+        if (loginSubmitBtn) {
+            loginSubmitBtn.style.backgroundColor = theme.btnBg;
+            loginSubmitBtn.style.color = theme.btnText;
+            // The submit-member-btn needs to be looked up on every theme change since it's inside the form/modal
+            const submitMemberBtn = document.getElementById('submit-member-btn');
+            if (submitMemberBtn) {
+                submitMemberBtn.style.backgroundColor = theme.btnBg;
+                submitMemberBtn.style.color = theme.btnText;
+            }
+        }
 
         toggleThemeBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
         localStorage.setItem('isDarkMode', isDark);
       };
 
-      const savedTheme = localStorage.getItem('isDarkMode');
-      const isDarkMode = savedTheme === 'true';
-      applyTheme(isDarkMode);
+    const applyFontSize = (multiplier) => {
+        const baseSize = 16;
+        const newSize = baseSize * multiplier;
+        document.documentElement.style.fontSize = `${newSize}px`;
 
-      toggleThemeBtn.addEventListener('click', () => {
+        // Also update elements inside the members container for the current view
+        const cards = document.querySelectorAll('.member-card');
+        cards.forEach(card => {
+            const h3 = card.querySelector('.member-name');
+            const p = card.querySelectorAll('.member-details, .member-detail');
+            if (h3) h3.style.fontSize = `${1.25 * multiplier}rem`;
+            p.forEach(el => el.style.fontSize = `${0.875 * multiplier}rem`);
+        });
+    };
+
+    // Load saved state
+    const savedTheme = localStorage.getItem('isDarkMode');
+    const isDarkMode = savedTheme === 'true';
+    applyTheme(isDarkMode);
+
+    const savedFont = localStorage.getItem('fontSizeMultiplier');
+    if (savedFont) {
+        fontSizeMultiplier = parseFloat(savedFont);
+        applyFontSize(fontSizeMultiplier);
+    }
+
+    toggleThemeBtn.addEventListener('click', () => {
         let currentThemeIsDark = localStorage.getItem('isDarkMode') === 'true';
         currentThemeIsDark = !currentThemeIsDark;
         applyTheme(currentThemeIsDark);
-      });
+    });
 
-      // Font size
-      const applyFontSize = (sizeMultiplier) => {
-        document.querySelectorAll('main p, main li, main a, main em, main strong, h2, h3, h4').forEach(el => {
-          el.style.fontSize = `${1 * sizeMultiplier}rem`;
-        });
-      };
-
-      let fontSizeMultiplier = parseFloat(localStorage.getItem('fontSizeMultiplier')) || 1.0;
-      applyFontSize(fontSizeMultiplier);
-
-      increaseFontBtn.addEventListener('click', () => {
-        fontSizeMultiplier = Math.min(fontSizeMultiplier + 0.1, 1.5);
-        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+    increaseFontBtn.addEventListener('click', () => {
+      if (fontSizeMultiplier < 1.5) {
+        fontSizeMultiplier += 0.1;
         applyFontSize(fontSizeMultiplier);
-      });
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier.toFixed(1));
+      } else {
+         alertUser("Maximum zoom level reached.");
+      }
+    });
 
-      decreaseFontBtn.addEventListener('click', () => {
-        fontSizeMultiplier = Math.max(fontSizeMultiplier - 0.1, 0.7);
-        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier);
+    decreaseFontBtn.addEventListener('click', () => {
+      if (fontSizeMultiplier > 0.8) {
+        fontSizeMultiplier -= 0.1;
         applyFontSize(fontSizeMultiplier);
-      });
+        localStorage.setItem('fontSizeMultiplier', fontSizeMultiplier.toFixed(1));
+      } else {
+          alertUser("Minimum zoom level reached.");
+      }
+    });
+
+    // --- Initial Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize the app state based on the current session
+        setupAuthAndAdmin();
     });
   </script>
 </body>
